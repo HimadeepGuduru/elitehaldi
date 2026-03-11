@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EliteHaldi Command Center v21</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0d0a;
+  --surface: #111310;
+  --card: #161914;
+  --card2: #1c2019;
+  --border: #252b22;
+  --border2: #2f3829;
+  --gold: #c9a227;
+  --gold-dim: #7a611a;
+  --gold-glow: rgba(201,162,39,.12);
+  --green: #4db872;
+  --green-dim: rgba(77,184,114,.12);
+  --red: #e05555;
+  --red-dim: rgba(224,85,85,.12);
+  --amber: #e09a38;
+  --amber-dim: rgba(224,154,56,.12);
+  --blue: #5b9bd5;
+  --blue-dim: rgba(91,155,213,.12);
+  --purple: #9b72cf;
+  --text: #e8e5db;
+  --text2: #b5b09f;
+  --muted: #6b6e62;
+  --serif: 'Fraunces', Georgia, serif;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Instrument Sans', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ═══════ HEADER ═══════ */
+.hdr {
+  position:sticky; top:0; z-index:90;
+  background:rgba(11,13,10,.92);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px;
+}
+.hdr-brand { display:flex; align-items:center; gap:10px; }
+.hdr-logo { font-family:var(--serif); font-size:20px; font-weight:900; color:var(--gold); letter-spacing:-.03em; }
+.hdr-v { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.12em; border:1px solid var(--border2); padding:2px 6px; border-radius:4px; }
+.hdr-right { display:flex; align-items:center; gap:8px; }
+.hdr-clock { font-family:var(--mono); font-size:13px; color:var(--text); letter-spacing:.05em; }
+.hdr-date { font-family:var(--mono); font-size:9px; color:var(--muted); }
+.mode-pill {
+  display:flex; gap:2px;
+  background:var(--card); border:1px solid var(--border); border-radius:20px; padding:3px;
+}
+.mpill {
+  font-family:var(--mono); font-size:10px; letter-spacing:.06em;
+  padding:4px 10px; border-radius:16px; cursor:pointer;
+  color:var(--muted); transition:all .2s;
+}
+.mpill.on { background:var(--gold); color:#000; font-weight:700; }
+
+/* ═══════ HEALTH BANNER ═══════ */
+.hbanner {
+  position:relative; z-index:1;
+  margin:12px 12px 0;
+  background:linear-gradient(135deg, #141a10 0%, #1a2015 50%, #141a10 100%);
+  border:1px solid var(--border2);
+  border-radius:18px;
+  padding:16px 18px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:18px;
+  align-items:center;
+  overflow:hidden;
+}
+.hbanner::before {
+  content:'';
+  position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:linear-gradient(to bottom, var(--green), var(--gold));
+  border-radius:18px 0 0 18px;
+}
+.hbanner::after {
+  content:'92';
+  position:absolute; right:-10px; top:-20px;
+  font-family:var(--serif); font-size:140px; font-weight:900;
+  color:rgba(77,184,114,.04); line-height:1; pointer-events:none;
+  letter-spacing:-.05em;
+}
+.hi-score { text-align:center; }
+.hi-num {
+  font-family:var(--serif); font-size:54px; font-weight:900;
+  line-height:1; color:var(--green);
+  text-shadow:0 0 40px rgba(77,184,114,.3);
+}
+.hi-lbl { font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:.14em; text-transform:uppercase; margin-top:2px; }
+.hi-mid { display:flex; flex-direction:column; gap:6px; }
+.hi-state {
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--mono); font-size:10px; font-weight:600;
+  color:var(--green); letter-spacing:.08em;
+}
+.hi-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.hi-segs { display:flex; gap:2px; }
+.hiseg { flex:1; height:5px; background:var(--border); border-radius:3px; }
+.hiseg.on { background:var(--green); }
+.hi-stats { display:flex; gap:12px; margin-top:2px; }
+.histat { font-family:var(--mono); font-size:9px; color:var(--muted); }
+.histat b { color:var(--text); font-weight:600; }
+.hi-actions { display:flex; flex-direction:column; gap:6px; }
+.share-btn {
+  background:var(--gold); color:#000; border:none;
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  padding:9px 14px; border-radius:10px; cursor:pointer;
+  letter-spacing:.06em; white-space:nowrap;
+  display:flex; align-items:center; gap:6px;
+  transition:all .2s;
+}
+.share-btn:hover { background:#ddb52e; transform:scale(1.03); }
+.img-btn {
+  background:var(--card2); color:var(--text2); border:1px solid var(--border2);
+  font-family:var(--mono); font-size:10px;
+  padding:7px 14px; border-radius:10px; cursor:pointer;
+  letter-spacing:.06em; white-space:nowrap;
+  display:flex; align-items:center; gap:6px;
+  transition:all .2s;
+}
+.img-btn:hover { border-color:var(--gold-dim); color:var(--gold); }
+
+/* ═══════ DAILIES BAR ═══════ */
+.dailies-bar {
+  position:relative; z-index:1;
+  margin:8px 12px 0;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 14px;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.dailies-lbl { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; min-width:60px; }
+.dd-items { display:flex; gap:6px; flex:1; flex-wrap:wrap; }
+.dd-item {
+  font-family:var(--mono); font-size:10px; font-weight:600;
+  padding:4px 10px; border-radius:20px; border:1px solid;
+  display:flex; align-items:center; gap:4px; cursor:pointer;
+}
+.dd-item.done { background:var(--green-dim); border-color:rgba(77,184,114,.3); color:var(--green); }
+.dd-item.pend { background:var(--amber-dim); border-color:rgba(224,154,56,.3); color:var(--amber); }
+.dd-score { margin-left:auto; font-family:var(--serif); font-size:22px; font-weight:700; color:var(--gold); }
+.dd-score small { font-family:var(--mono); font-size:11px; color:var(--muted); }
+
+/* ═══════ TABS ═══════ */
+.tabs {
+  position:relative; z-index:1;
+  margin:10px 12px 0;
+  display:flex; gap:3px;
+  background:var(--card); border:1px solid var(--border); border-radius:12px; padding:3px;
+}
+.tab {
+  flex:1; text-align:center; padding:7px 0;
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--muted); cursor:pointer; border-radius:9px; transition:all .2s;
+}
+.tab.on { background:var(--border2); color:var(--text); font-weight:600; }
+
+/* ═══════ CONTENT ═══════ */
+.view { display:none; position:relative; z-index:1; padding:10px 12px 90px; animation:fadeUp .22s ease; }
+.view.on { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+/* ═══════ DAILY REPORT — THE MAIN EVENT ═══════ */
+
+/* VPD Hero */
+.vpd-hero {
+  background:linear-gradient(135deg, #0f1a12 0%, #141f16 100%);
+  border:1px solid var(--border2);
+  border-radius:16px;
+  padding:16px 18px 14px;
+  margin-bottom:10px;
+  position:relative; overflow:hidden;
+}
+.vpd-hero::after {
+  content:'VPD';
+  position:absolute; right:10px; bottom:-10px;
+  font-family:var(--serif); font-size:80px; font-weight:900;
+  color:rgba(77,184,114,.05); line-height:1; pointer-events:none;
+}
+.vpd-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; }
+.vpd-left {}
+.vpd-tag { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-bottom:4px; display:flex; align-items:center; gap:6px; }
+.vpd-val-row { display:flex; align-items:baseline; gap:8px; }
+.vpd-big { font-family:var(--serif); font-size:44px; font-weight:900; color:var(--green); line-height:1; text-shadow:0 0 30px rgba(77,184,114,.25); }
+.vpd-unit { font-family:var(--mono); font-size:13px; color:var(--muted); }
+.vpd-delta { font-family:var(--mono); font-size:11px; color:var(--green); margin-left:4px; }
+.vpd-right { text-align:right; }
+.vpd-status-badge {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  padding:5px 12px; border-radius:20px;
+  background:var(--green-dim); color:var(--green);
+  border:1px solid rgba(77,184,114,.25);
+  display:inline-flex; align-items:center; gap:6px;
+  letter-spacing:.06em;
+}
+.vpd-tip { font-family:var(--mono); font-size:9px; color:var(--muted); margin-top:5px; max-width:160px; text-align:right; line-height:1.4; }
+.vpd-gradient-bar {
+  position:relative; height:10px;
+  background:linear-gradient(to right,#3b6fd4 0%,#4db872 25%,#4db872 55%,#e09a38 72%,#e05555 100%);
+  border-radius:6px; margin:0 4px;
+}
+.vpd-needle {
+  position:absolute; top:50%; transform:translate(-50%,-50%);
+  width:18px; height:18px; border-radius:50%;
+  background:#fff; border:3px solid var(--gold);
+  box-shadow:0 0 14px rgba(201,162,39,.6);
+  transition:left .6s cubic-bezier(.34,1.56,.64,1);
+}
+.vpd-axis { display:flex; justify-content:space-between; margin-top:5px; padding:0 4px; }
+.vpd-ax { font-family:var(--mono); font-size:8px; color:var(--muted); }
+
+/* KPI COMMAND GRID */
+.cmd-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.kcard {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:13px 14px;
+  position:relative;
+  overflow:hidden;
+  transition:border-color .2s;
+}
+.kcard:hover { border-color:var(--border2); }
+.kcard.alert { border-color:rgba(224,154,56,.4); }
+.kcard.good { border-color:rgba(77,184,114,.2); }
+
+.kc-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.kc-ico-name { display:flex; align-items:center; gap:5px; }
+.kc-ico { font-size:14px; }
+.kc-name { font-family:var(--mono); font-size:8px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.kc-badge {
+  font-family:var(--mono); font-size:8px; font-weight:600;
+  padding:2px 6px; border-radius:8px; letter-spacing:.04em;
+}
+.kc-badge.g { background:var(--green-dim); color:var(--green); }
+.kc-badge.a { background:var(--amber-dim); color:var(--amber); }
+.kc-badge.r { background:var(--red-dim); color:var(--red); }
+
+.kc-val-row { display:flex; align-items:baseline; gap:4px; margin-bottom:3px; }
+.kc-val { font-family:var(--serif); font-size:30px; font-weight:700; line-height:1; color:var(--text); }
+.kc-unit { font-family:var(--mono); font-size:11px; color:var(--muted); }
+.kc-delta { font-family:var(--mono); font-size:9px; font-weight:600; margin-bottom:6px; }
+.kc-delta.up { color:var(--green); }
+.kc-delta.dn { color:var(--red); }
+.kc-delta.nc { color:var(--muted); }
+
+/* Range bar */
+.rbar-wrap { margin-top:4px; }
+.rbar-labels { display:flex; justify-content:space-between; font-family:var(--mono); font-size:7px; color:var(--muted); margin-bottom:2px; }
+.rbar {
+  position:relative; height:5px; background:var(--border); border-radius:5px; overflow:visible;
+}
+.rbar-ok { position:absolute; height:100%; background:rgba(77,184,114,.2); border-radius:5px; }
+.rbar-pin {
+  position:absolute; top:50%; transform:translate(-50%,-50%);
+  width:10px; height:10px; border-radius:50%;
+  border:2px solid var(--bg);
+  box-shadow:0 0 6px currentColor;
+  transition:left .5s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* Tooltip */
+.ttip { position:relative; display:inline-flex; }
+.ttip-box {
+  display:none;
+  position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+  background:#1e2620; border:1px solid var(--border2);
+  border-radius:10px; padding:10px 13px;
+  width:190px; font-size:11px; line-height:1.55; color:var(--text2);
+  z-index:99; box-shadow:0 8px 32px rgba(0,0,0,.7);
+  pointer-events:none;
+}
+.ttip-box::after {
+  content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+  border:5px solid transparent; border-top-color:var(--border2);
+}
+.ttip:hover .ttip-box { display:block; }
+.help-dot {
+  width:16px; height:16px; border-radius:50%;
+  background:var(--border); color:var(--muted);
+  font-family:var(--serif); font-size:9px; font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:help; transition:background .2s;
+}
+.ttip:hover .help-dot { background:var(--gold-dim); color:var(--gold); }
+
+/* ENVIRONMENT ROW */
+.env-row {
+  display:grid; grid-template-columns:repeat(4, 1fr);
+  gap:6px; margin-bottom:10px;
+}
+.env-item {
+  background:var(--card); border:1px solid var(--border); border-radius:12px;
+  padding:10px 10px 8px; text-align:center;
+}
+.env-ico { font-size:18px; margin-bottom:2px; }
+.env-lbl { font-family:var(--mono); font-size:7px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+.env-val { font-family:var(--serif); font-size:18px; font-weight:700; color:var(--text); line-height:1.1; }
+.env-sub { font-family:var(--mono); font-size:7px; color:var(--muted); }
+.env-dot { display:inline-block; width:5px; height:5px; border-radius:50%; margin-right:3px; vertical-align:middle; }
+
+/* NUTRITION PANEL */
+.nutr-panel {
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:14px 16px; margin-bottom:10px;
+}
+.panel-head {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
+}
+.panel-title { font-family:var(--mono); font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; }
+.panel-badge { font-family:var(--mono); font-size:9px; padding:2px 8px; border-radius:8px; }
+.nutr-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.nutr-item { }
+.nutr-name { font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:2px; }
+.nutr-val { font-family:var(--serif); font-size:20px; font-weight:700; color:var(--text); line-height:1; }
+.nutr-unit { font-family:var(--mono); font-size:9px; color:var(--muted); }
+.nutr-delta { font-family:var(--mono); font-size:9px; margin-top:1px; }
+.nutr-bar { height:3px; background:var(--border); border-radius:3px; margin-top:4px; overflow:hidden; }
+.nutr-bar-fill { height:100%; border-radius:3px; transition:width .5s; }
+
+/* ZONE PANEL */
+.zone-panel {
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:14px 16px; margin-bottom:10px;
+}
+.zone-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.zone-card {
+  background:var(--card2); border:1px solid var(--border); border-radius:12px;
+  padding:12px 10px; text-align:center; position:relative; overflow:hidden;
+}
+.zone-card.ok { border-color:rgba(77,184,114,.2); }
+.zone-card.warn { border-color:rgba(224,154,56,.3); }
+.zone-card.bad { border-color:rgba(224,85,85,.3); }
+.z-face { font-size:28px; line-height:1; margin-bottom:4px; }
+.z-name { font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+.z-score { font-family:var(--serif); font-size:22px; font-weight:700; }
+.z-score.ok { color:var(--green); }
+.z-score.warn { color:var(--amber); }
+.z-score.bad { color:var(--red); }
+.z-tag {
+  font-family:var(--mono); font-size:8px; font-weight:600;
+  padding:2px 7px; border-radius:6px; display:inline-block; margin-top:3px;
+}
+.z-tag.ok { background:var(--green-dim); color:var(--green); }
+.z-tag.warn { background:var(--amber-dim); color:var(--amber); }
+.z-tag.bad { background:var(--red-dim); color:var(--red); }
+.z-metrics { margin-top:8px; display:flex; flex-direction:column; gap:3px; }
+.z-metric { display:flex; justify-content:space-between; font-family:var(--mono); font-size:8px; }
+.z-mkey { color:var(--muted); }
+.z-mval { color:var(--text); font-weight:600; }
+
+/* FERTIGATION TIMELINE */
+.fert-panel {
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:14px 16px; margin-bottom:10px;
+}
+.fert-timeline { display:flex; gap:0; margin:12px 0 8px; position:relative; }
+.fert-timeline::before {
+  content:''; position:absolute; top:12px; left:0; right:0; height:2px; background:var(--border); z-index:0;
+}
+.fert-event {
+  flex:1; display:flex; flex-direction:column; align-items:center; position:relative; z-index:1;
+}
+.fert-dot {
+  width:24px; height:24px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; border:2px solid var(--border); background:var(--card2);
+  margin-bottom:4px; transition:all .3s;
+}
+.fert-dot.done { background:var(--green-dim); border-color:var(--green); }
+.fert-dot.next { background:var(--gold-glow); border-color:var(--gold); animation:pulse-gold 2s infinite; }
+.fert-dot.skip { background:var(--border); border-color:var(--border2); opacity:.4; }
+@keyframes pulse-gold { 0%,100%{box-shadow:0 0 0 0 rgba(201,162,39,.4)} 50%{box-shadow:0 0 0 6px rgba(201,162,39,0)} }
+.fert-time { font-family:var(--mono); font-size:8px; color:var(--muted); }
+.fert-label { font-family:var(--mono); font-size:7px; color:var(--muted); letter-spacing:.04em; }
+
+.npk-row { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.npk-box {
+  background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:10px 10px 8px;
+}
+.npk-el { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+.npk-val { font-family:var(--serif); font-size:22px; font-weight:700; color:var(--text); }
+.npk-unit { font-family:var(--mono); font-size:9px; color:var(--muted); }
+.npk-status { font-family:var(--mono); font-size:9px; margin-top:2px; }
+
+/* BIOCONTROL */
+.bio-panel {
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:14px 16px; margin-bottom:10px;
+}
+.bio-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+.bio-item {
+  background:var(--card2); border:1px solid var(--border); border-radius:10px;
+  padding:10px 12px; display:flex; align-items:center; gap:10px;
+}
+.bio-ico { font-size:22px; flex-shrink:0; }
+.bio-name { font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; }
+.bio-val { font-family:var(--serif); font-size:18px; font-weight:700; }
+.bio-val.ok { color:var(--green); }
+.bio-val.warn { color:var(--amber); }
+.bio-val.bad { color:var(--red); }
+.bio-sub { font-family:var(--mono); font-size:8px; color:var(--muted); }
+
+/* ACTIONS LIST */
+.actions-panel {
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:14px 16px; margin-bottom:10px;
+}
+.action-item {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 0; border-bottom:1px solid var(--border);
+  cursor:pointer;
+}
+.action-item:last-child { border-bottom:none; }
+.action-check {
+  width:20px; height:20px; border-radius:50%; border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; font-size:10px; transition:all .2s;
+}
+.action-item.done .action-check { background:var(--green); border-color:var(--green); color:#000; }
+.action-pri {
+  width:4px; height:32px; border-radius:4px; flex-shrink:0;
+}
+.action-pri.high { background:var(--red); }
+.action-pri.med { background:var(--amber); }
+.action-pri.low { background:var(--green); }
+.action-content { flex:1; }
+.action-name { font-size:13px; color:var(--text); }
+.action-item.done .action-name { text-decoration:line-through; color:var(--muted); }
+.action-meta { font-family:var(--mono); font-size:9px; color:var(--muted); margin-top:1px; }
+.action-tag { font-family:var(--mono); font-size:8px; padding:2px 7px; border-radius:6px; }
+
+/* VOICE BTN */
+.voice-btn {
+  width:100%; background:var(--card); border:1px dashed var(--border2);
+  border-radius:14px; padding:14px 16px;
+  display:flex; align-items:center; gap:12px;
+  cursor:pointer; transition:border-color .2s; margin-bottom:10px;
+}
+.voice-btn:hover { border-color:var(--gold); }
+.voice-circle {
+  width:40px; height:40px; border-radius:50%;
+  background:var(--gold-glow); border:1px solid var(--gold-dim);
+  display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;
+}
+.voice-text { font-size:13px; color:var(--text); }
+.voice-sub { font-size:11px; color:var(--muted); margin-top:1px; }
+
+/* COLLAPSIBLE */
+.collapse {
+  background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:8px; overflow:hidden;
+}
+.collapse-head {
+  padding:12px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+}
+.collapse-lbl { font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:8px; }
+.c-arrow { transition:transform .3s; color:var(--muted); font-size:10px; }
+.collapse.open .c-arrow { transform:rotate(180deg); }
+.collapse-body { display:none; padding:0 16px 12px; font-size:12px; color:var(--muted); line-height:1.6; }
+.collapse.open .collapse-body { display:block; }
+
+/* ═══════ WEEKLY ═══════ */
+.chart-card {
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:14px 16px; margin-bottom:10px;
+}
+.chart-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.chart-title { font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; }
+.chart-stat { font-family:var(--mono); font-size:10px; font-weight:600; }
+.mini-chart { display:flex; align-items:flex-end; gap:4px; height:64px; }
+.bar { flex:1; background:var(--border); border-radius:4px 4px 0 0; position:relative; overflow:hidden; cursor:pointer; }
+.bar:hover { background:var(--gold-dim); }
+.bar-fill { position:absolute; bottom:0; width:100%; border-radius:4px 4px 0 0; transition:height .6s cubic-bezier(.34,1.56,.64,1); }
+.bar-labels { display:flex; gap:4px; margin-top:4px; }
+.bar-lbl { flex:1; font-family:var(--mono); font-size:7px; color:var(--muted); text-align:center; }
+
+/* ═══════ MONTHLY ═══════ */
+.pheno-card {
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:14px 16px; margin-bottom:10px;
+}
+.pheno-stages { display:flex; gap:2px; margin:10px 0 8px; }
+.pstage {
+  flex:1; height:34px; border-radius:4px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:7px; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--muted); background:var(--border); transition:all .3s;
+}
+.pstage.done { background:rgba(77,184,114,.2); color:var(--green); }
+.pstage.cur { background:var(--gold); color:#000; font-weight:700; transform:scaleY(1.12); }
+.pstage.fut { opacity:.35; }
+.pheno-sub { font-size:11px; color:var(--muted); }
+.pheno-sub b { color:var(--gold); font-family:var(--serif); font-size:13px; }
+
+/* ═══════ YEARLY ═══════ */
+.roi-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.roi-item {
+  background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px;
+}
+.roi-name { font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:4px; }
+.roi-val { font-family:var(--serif); font-size:26px; font-weight:900; color:var(--gold); }
+.roi-sub { font-family:var(--mono); font-size:9px; color:var(--muted); margin-top:2px; }
+
+/* ═══════ CHILD VIEW ═══════ */
+.child-view { display:none; position:relative; z-index:1; padding:10px 12px 90px; }
+.child-view.on { display:block; }
+.urgent-card {
+  background:var(--card); border:2px solid var(--amber); border-radius:16px;
+  padding:18px; margin-bottom:12px; position:relative; overflow:hidden;
+}
+.urgent-card::before { content:'⚡'; position:absolute; right:-5px; top:-10px; font-size:90px; opacity:.06; }
+.urg-title { font-family:var(--serif); font-size:20px; font-weight:700; color:var(--amber); margin-bottom:12px; }
+.urg-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+.urg-item:last-child { border-bottom:none; }
+.urg-face { font-size:26px; }
+.urg-text { font-size:13px; color:var(--text); line-height:1.4; }
+.urg-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+.task-card {
+  background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px;
+}
+.task-title { font-family:var(--serif); font-size:20px; font-weight:700; color:var(--text); margin-bottom:14px; }
+.task-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+.task-item:last-child { border-bottom:none; }
+.task-chk { width:22px; height:22px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .2s; font-size:11px; }
+.task-item.done .task-chk { background:var(--green); border-color:var(--green); color:#000; }
+.task-ico { font-size:18px; }
+.task-lbl { font-size:14px; color:var(--text); }
+.task-item.done .task-lbl { text-decoration:line-through; color:var(--muted); }
+
+/* ═══════ SHARE MODAL ═══════ */
+.modal-bg {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.75); backdrop-filter:blur(8px);
+  z-index:200; align-items:center; justify-content:center; padding:16px;
+}
+.modal-bg.on { display:flex; }
+.modal {
+  background:#141a12; border:1px solid var(--border2);
+  border-radius:20px; width:100%; max-width:380px;
+  overflow:hidden; animation:popIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn { from{opacity:0;transform:scale(.9)} to{opacity:1;transform:scale(1)} }
+.modal-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 18px; border-bottom:1px solid var(--border);
+}
+.modal-title { font-family:var(--serif); font-size:18px; font-weight:700; color:var(--gold); }
+.modal-close { background:var(--border); border:none; color:var(--muted); width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; }
+
+/* The actual share card */
+.share-card {
+  margin:16px 18px;
+  background:linear-gradient(135deg, #0f1a0f 0%, #1a2415 50%, #111a0e 100%);
+  border:1px solid rgba(201,162,39,.3);
+  border-radius:16px;
+  padding:18px;
+  font-family:var(--mono);
+}
+.sc-logo { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.sc-logo-name { font-family:var(--serif); font-size:18px; font-weight:900; color:var(--gold); }
+.sc-logo-date { font-size:10px; color:var(--muted); }
+.sc-hi { display:flex; align-items:center; gap:12px; margin-bottom:14px; padding:12px; background:rgba(77,184,114,.07); border-radius:10px; border:1px solid rgba(77,184,114,.15); }
+.sc-hi-score { font-family:var(--serif); font-size:40px; font-weight:900; color:var(--green); line-height:1; }
+.sc-hi-right {}
+.sc-state { font-size:11px; color:var(--green); font-weight:600; letter-spacing:.06em; }
+.sc-hi-delta { font-size:10px; color:var(--muted); margin-top:2px; }
+.sc-kpis { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; }
+.sc-kpi { background:rgba(255,255,255,.03); border-radius:8px; padding:8px; }
+.sc-kpi-n { font-size:8px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; }
+.sc-kpi-v { font-family:var(--serif); font-size:18px; font-weight:700; color:var(--text); line-height:1.1; }
+.sc-kpi-d { font-size:8px; }
+.sc-kpi-d.up { color:var(--green); }
+.sc-kpi-d.dn { color:var(--red); }
+.sc-zones { display:flex; gap:6px; margin-bottom:12px; }
+.sc-zone { flex:1; padding:7px 6px; border-radius:8px; text-align:center; }
+.sc-zone.ok { background:rgba(77,184,114,.1); border:1px solid rgba(77,184,114,.2); }
+.sc-zone.warn { background:rgba(224,154,56,.1); border:1px solid rgba(224,154,56,.2); }
+.sc-zone-name { font-size:8px; color:var(--muted); }
+.sc-zone-score { font-family:var(--serif); font-size:16px; font-weight:700; }
+.sc-zone-score.ok { color:var(--green); }
+.sc-zone-score.warn { color:var(--amber); }
+.sc-alerts { font-size:10px; color:var(--amber); padding:8px; background:rgba(224,154,56,.07); border-radius:8px; border:1px solid rgba(224,154,56,.15); line-height:1.6; }
+.sc-footer { font-size:8px; color:var(--muted); text-align:center; margin-top:10px; letter-spacing:.06em; }
+
+.copy-text-wrap { padding:0 18px 12px; }
+.copy-text-area {
+  width:100%; background:var(--card2); border:1px solid var(--border); border-radius:10px;
+  padding:12px; font-family:var(--mono); font-size:11px; color:var(--text2);
+  line-height:1.6; resize:none; height:120px; outline:none;
+}
+.modal-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 18px 18px; }
+.mbtn {
+  padding:11px; border-radius:10px; font-family:var(--mono); font-size:11px; font-weight:600;
+  cursor:pointer; border:none; letter-spacing:.06em; transition:all .2s;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.mbtn.primary { background:var(--gold); color:#000; }
+.mbtn.primary:hover { background:#ddb52e; }
+.mbtn.secondary { background:var(--border); color:var(--text2); }
+.mbtn.secondary:hover { background:var(--border2); }
+
+/* ═══════ BOTTOM NAV ═══════ */
+.bnav {
+  position:fixed; bottom:0; left:0; right:0;
+  background:rgba(11,13,10,.95); backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  display:flex; z-index:80;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bnav-item {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  padding:8px 0 6px; cursor:pointer; color:var(--muted);
+  font-family:var(--mono); font-size:8px; letter-spacing:.06em; text-transform:uppercase;
+  transition:color .2s;
+}
+.bnav-item .ni { font-size:19px; margin-bottom:2px; }
+.bnav-item.on { color:var(--gold); }
+
+/* ═══════ TOAST ═══════ */
+.toast {
+  position:fixed; bottom:74px; left:50%; transform:translateX(-50%) translateY(12px);
+  background:#1e2620; border:1px solid var(--gold-dim);
+  border-radius:12px; padding:10px 18px;
+  font-family:var(--mono); font-size:11px; color:var(--gold);
+  max-width:300px; width:90%; text-align:center;
+  z-index:300; opacity:0; transition:all .3s;
+}
+.toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-brand">
+    <div class="hdr-logo">🌿 EliteHaldi</div>
+    <div class="hdr-v">V21</div>
+  </div>
+  <div class="hdr-right">
+    <div>
+      <div class="hdr-clock" id="clock">--:--:--</div>
+      <div class="hdr-date">Mar 11, 2026</div>
+    </div>
+    <div class="mode-pill">
+      <div class="mpill on" id="ebtn" onclick="setMode('e')">Expert</div>
+      <div class="mpill" id="cbtn" onclick="setMode('c')">Simple</div>
+    </div>
+  </div>
+</div>
+
+<!-- HEALTH BANNER -->
+<div class="hbanner" id="hbanner">
+  <div class="hi-score">
+    <div class="hi-num">92</div>
+    <div class="hi-lbl">Farm Health</div>
+  </div>
+  <div class="hi-mid">
+    <div class="hi-state"><div class="hi-dot"></div>🌱 GROWTH STATE · +3 today</div>
+    <div class="hi-segs" id="hisegs"></div>
+    <div class="hi-stats">
+      <div class="histat">Zones: <b>3/3 Online</b></div>
+      <div class="histat">Alerts: <b style="color:var(--amber)">2</b></div>
+      <div class="histat">Week: <b style="color:var(--green)">↑ +5%</b></div>
+    </div>
+  </div>
+  <div class="hi-actions">
+    <button class="share-btn" onclick="openShare()">📋 Share Brief</button>
+    <button class="img-btn" onclick="showToast('📸 Snapshot saved to Photos')">🖼 Snapshot</button>
+  </div>
+</div>
+
+<!-- DAILIES -->
+<div class="dailies-bar" id="dailies">
+  <div class="dailies-lbl">3 Dailies</div>
+  <div class="dd-items">
+    <div class="dd-item done">✓ Fertigation</div>
+    <div class="dd-item done">✓ pH Check</div>
+    <div class="dd-item pend">⏳ Scouting</div>
+  </div>
+  <div class="dd-score">2<small>/3</small></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs" id="tabs">
+  <div class="tab on" onclick="switchTab('daily',this)">Daily</div>
+  <div class="tab" onclick="switchTab('weekly',this)">Weekly</div>
+  <div class="tab" onclick="switchTab('monthly',this)">Monthly</div>
+  <div class="tab" onclick="switchTab('yearly',this)">Yearly</div>
+</div>
+
+<!-- ═══════════════════════════════ DAILY VIEW ═══════════════════════════════ -->
+<div class="view on" id="daily">
+
+  <!-- VPD HERO — First element for consultants -->
+  <div class="vpd-hero">
+    <div class="vpd-top">
+      <div class="vpd-left">
+        <div class="vpd-tag">
+          💨 VPD STRESS METER
+          <div class="ttip">
+            <div class="help-dot">?</div>
+            <div class="ttip-box">VPD (Vapour Pressure Deficit) is the "drying power" of air. It drives transpiration. Optimal range for turmeric: 0.8–1.2 kPa. High VPD causes drought stress even with adequate irrigation.</div>
+          </div>
+        </div>
+        <div class="vpd-val-row">
+          <div class="vpd-big">0.94</div>
+          <div class="vpd-unit">kPa</div>
+          <div class="vpd-delta">↓0.02</div>
+        </div>
+      </div>
+      <div class="vpd-right">
+        <div class="vpd-status-badge"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;animation:blink 2s infinite"></span>Optimal</div>
+        <div class="vpd-tip">Transpiration risk: Low. No irrigation adjustment needed.</div>
+      </div>
+    </div>
+    <div class="vpd-gradient-bar">
+      <div class="vpd-needle" style="left:42%"></div>
+    </div>
+    <div class="vpd-axis">
+      <span class="vpd-ax">Saturated 0.4</span>
+      <span class="vpd-ax" style="color:var(--green)">✓ Optimal Zone</span>
+      <span class="vpd-ax">Stress 1.5</span>
+      <span class="vpd-ax">Danger 2.0+</span>
+    </div>
+  </div>
+
+  <!-- ENVIRONMENT ROW -->
+  <div class="env-row">
+    <div class="env-item">
+      <div class="env-ico">🌡️</div>
+      <div class="env-lbl">Air Temp</div>
+      <div class="env-val" style="color:var(--green)">28°C</div>
+      <div class="env-sub"><span class="env-dot" style="background:var(--green)"></span>Optimal</div>
+    </div>
+    <div class="env-item">
+      <div class="env-ico">💧</div>
+      <div class="env-lbl">Humidity</div>
+      <div class="env-val" style="color:var(--green)">72%</div>
+      <div class="env-sub"><span class="env-dot" style="background:var(--green)"></span>Good</div>
+    </div>
+    <div class="env-item">
+      <div class="env-ico">☀️</div>
+      <div class="env-lbl">DLI</div>
+      <div class="env-val" style="color:var(--amber)">14.2</div>
+      <div class="env-sub"><span class="env-dot" style="background:var(--amber)"></span>mol/m²/d</div>
+    </div>
+    <div class="env-item">
+      <div class="env-ico">🌬️</div>
+      <div class="env-lbl">Root Temp</div>
+      <div class="env-val" style="color:var(--green)">24°C</div>
+      <div class="env-sub"><span class="env-dot" style="background:var(--green)"></span>Ideal</div>
+    </div>
+  </div>
+
+  <!-- KPI COMMAND GRID -->
+  <div class="cmd-grid">
+
+    <!-- EC -->
+    <div class="kcard good">
+      <div class="kc-top">
+        <div class="kc-ico-name">
+          <span class="kc-ico">🧪</span>
+          <span class="kc-name">EC Level</span>
+          <div class="ttip" style="margin-left:3px">
+            <div class="help-dot">?</div>
+            <div class="ttip-box">High EC (&gt;3.0) causes salt stress, blocking water uptake. Low EC (&lt;1.5) = nutrient deficiency. 2.4 is ideal for vegetative stage.</div>
+          </div>
+        </div>
+        <div class="kc-badge g">✓ OK</div>
+      </div>
+      <div class="kc-val-row"><span class="kc-val">2.4</span><span class="kc-unit"> mS/cm</span></div>
+      <div class="kc-delta up">↑ 0.2 from yesterday</div>
+      <div class="rbar-wrap">
+        <div class="rbar-labels"><span>1.5 min</span><span>3.0 max</span></div>
+        <div class="rbar">
+          <div class="rbar-ok" style="left:0;width:100%"></div>
+          <div class="rbar-pin" style="left:60%;background:var(--green);color:var(--green)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- pH -->
+    <div class="kcard good">
+      <div class="kc-top">
+        <div class="kc-ico-name">
+          <span class="kc-ico">⚗️</span>
+          <span class="kc-name">pH Level</span>
+          <div class="ttip" style="margin-left:3px">
+            <div class="help-dot">?</div>
+            <div class="ttip-box">High pH (&gt;7.0) locks out phosphorus and iron. Turmeric needs pH 5.5–6.5. Current 6.1 is excellent for nutrient uptake.</div>
+          </div>
+        </div>
+        <div class="kc-badge g">Stable</div>
+      </div>
+      <div class="kc-val-row"><span class="kc-val">6.1</span><span class="kc-unit"> pH</span></div>
+      <div class="kc-delta nc">→ No change today</div>
+      <div class="rbar-wrap">
+        <div class="rbar-labels"><span>5.5 min</span><span>6.5 max</span></div>
+        <div class="rbar">
+          <div class="rbar-ok" style="left:0;width:100%"></div>
+          <div class="rbar-pin" style="left:60%;background:var(--green);color:var(--green)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transpiration -->
+    <div class="kcard">
+      <div class="kc-top">
+        <div class="kc-ico-name">
+          <span class="kc-ico">💧</span>
+          <span class="kc-name">Transpiration</span>
+          <div class="ttip" style="margin-left:3px">
+            <div class="help-dot">?</div>
+            <div class="ttip-box">Monitor alongside VPD. If VPD rises above 1.3 kPa, increase irrigation frequency to prevent wilting.</div>
+          </div>
+        </div>
+        <div class="kc-badge g">Normal</div>
+      </div>
+      <div class="kc-val-row"><span class="kc-val">3.8</span><span class="kc-unit"> L/m²/d</span></div>
+      <div class="kc-delta dn">↓ 0.4 from yesterday</div>
+      <div class="rbar-wrap">
+        <div class="rbar-labels"><span>2.0</span><span>6.0</span></div>
+        <div class="rbar">
+          <div class="rbar-ok" style="left:0;width:100%"></div>
+          <div class="rbar-pin" style="left:47%;background:var(--blue);color:var(--blue)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Curcumin -->
+    <div class="kcard">
+      <div class="kc-top">
+        <div class="kc-ico-name">
+          <span class="kc-ico">🟡</span>
+          <span class="kc-name">Curcumin %</span>
+          <div class="ttip" style="margin-left:3px">
+            <div class="help-dot">?</div>
+            <div class="ttip-box">Your #1 market value KPI. Stress during rhizome development (weeks 14–20) directly reduces curcumin %. Keep all stress indicators green to protect this number.</div>
+          </div>
+        </div>
+        <div class="kc-badge a">Watch</div>
+      </div>
+      <div class="kc-val-row"><span class="kc-val">4.2</span><span class="kc-unit">%</span></div>
+      <div class="kc-delta up">↑ 0.3 this week</div>
+      <div class="rbar-wrap">
+        <div class="rbar-labels"><span>3.0 min</span><span>6.0 target</span></div>
+        <div class="rbar">
+          <div class="rbar-ok" style="left:0;width:100%"></div>
+          <div class="rbar-pin" style="left:40%;background:var(--amber);color:var(--amber)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DO -->
+    <div class="kcard">
+      <div class="kc-top">
+        <div class="kc-ico-name">
+          <span class="kc-ico">🫧</span>
+          <span class="kc-name">Dissolved O₂</span>
+          <div class="ttip" style="margin-left:3px">
+            <div class="help-dot">?</div>
+            <div class="ttip-box">Low DO (&lt;6 mg/L) suffocates roots, causing root rot. Turmeric needs &gt;7 mg/L for healthy rhizome development.</div>
+          </div>
+        </div>
+        <div class="kc-badge g">Good</div>
+      </div>
+      <div class="kc-val-row"><span class="kc-val">8.1</span><span class="kc-unit"> mg/L</span></div>
+      <div class="kc-delta up">↑ 0.3 today</div>
+      <div class="rbar-wrap">
+        <div class="rbar-labels"><span>6.0 min</span><span>10.0 max</span></div>
+        <div class="rbar">
+          <div class="rbar-ok" style="left:0;width:100%"></div>
+          <div class="rbar-pin" style="left:52%;background:var(--blue);color:var(--blue)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Water Usage -->
+    <div class="kcard">
+      <div class="kc-top">
+        <div class="kc-ico-name">
+          <span class="kc-ico">🪣</span>
+          <span class="kc-name">Water Usage</span>
+        </div>
+        <div class="kc-badge g">On Track</div>
+      </div>
+      <div class="kc-val-row"><span class="kc-val">180</span><span class="kc-unit"> L</span></div>
+      <div class="kc-delta nc">Budget: 200 L/day</div>
+      <div class="rbar-wrap">
+        <div class="rbar-labels"><span>0</span><span>200 L budget</span></div>
+        <div class="rbar">
+          <div class="rbar-ok" style="left:0;width:100%"></div>
+          <div class="rbar-pin" style="left:90%;background:var(--amber);color:var(--amber)"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ZONE PANEL -->
+  <div class="zone-panel">
+    <div class="panel-head">
+      <div class="panel-title">🗺 Zone Health</div>
+      <div class="panel-badge" style="background:var(--green-dim);color:var(--green)">3/3 Online</div>
+    </div>
+    <div class="zone-row">
+      <div class="zone-card ok">
+        <div class="z-face">😊</div>
+        <div class="z-name">Zone A</div>
+        <div class="z-score ok">88%</div>
+        <div class="z-tag ok">Healthy</div>
+        <div class="z-metrics">
+          <div class="z-metric"><span class="z-mkey">EC</span><span class="z-mval" style="color:var(--green)">2.3</span></div>
+          <div class="z-metric"><span class="z-mkey">pH</span><span class="z-mval" style="color:var(--green)">6.0</span></div>
+          <div class="z-metric"><span class="z-mkey">Temp</span><span class="z-mval">28°C</span></div>
+        </div>
+      </div>
+      <div class="zone-card warn">
+        <div class="z-face">😐</div>
+        <div class="z-name">Zone B</div>
+        <div class="z-score warn">71%</div>
+        <div class="z-tag warn">EC High</div>
+        <div class="z-metrics">
+          <div class="z-metric"><span class="z-mkey">EC</span><span class="z-mval" style="color:var(--red)">2.9 ↑</span></div>
+          <div class="z-metric"><span class="z-mkey">pH</span><span class="z-mval" style="color:var(--green)">6.2</span></div>
+          <div class="z-metric"><span class="z-mkey">Temp</span><span class="z-mval">29°C</span></div>
+        </div>
+      </div>
+      <div class="zone-card ok">
+        <div class="z-face">😊</div>
+        <div class="z-name">Zone C</div>
+        <div class="z-score ok">85%</div>
+        <div class="z-tag ok">Stable</div>
+        <div class="z-metrics">
+          <div class="z-metric"><span class="z-mkey">EC</span><span class="z-mval" style="color:var(--green)">2.4</span></div>
+          <div class="z-metric"><span class="z-mkey">pH</span><span class="z-mval" style="color:var(--green)">6.1</span></div>
+          <div class="z-metric"><span class="z-mkey">Temp</span><span class="z-mval">27°C</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUTRITION PANEL (N/P/K + Ca + Mg + Fe) -->
+  <div class="nutr-panel">
+    <div class="panel-head">
+      <div class="panel-title">🧬 Nutrient Profile</div>
+      <div class="panel-badge" style="background:var(--green-dim);color:var(--green)">5/6 Optimal</div>
+    </div>
+    <div class="nutr-grid">
+      <div class="nutr-item">
+        <div class="nutr-name">Nitrogen (N)</div>
+        <div><span class="nutr-val">180</span><span class="nutr-unit"> ppm</span></div>
+        <div class="nutr-delta" style="color:var(--green)">↑ target</div>
+        <div class="nutr-bar"><div class="nutr-bar-fill" style="width:72%;background:var(--green)"></div></div>
+      </div>
+      <div class="nutr-item">
+        <div class="nutr-name">Phosphorus (P)</div>
+        <div><span class="nutr-val">42</span><span class="nutr-unit"> ppm</span></div>
+        <div class="nutr-delta" style="color:var(--green)">✓ optimal</div>
+        <div class="nutr-bar"><div class="nutr-bar-fill" style="width:60%;background:var(--green)"></div></div>
+      </div>
+      <div class="nutr-item">
+        <div class="nutr-name">Potassium (K)</div>
+        <div><span class="nutr-val">210</span><span class="nutr-unit"> ppm</span></div>
+        <div class="nutr-delta" style="color:var(--amber)">↑ slight high</div>
+        <div class="nutr-bar"><div class="nutr-bar-fill" style="width:84%;background:var(--amber)"></div></div>
+      </div>
+      <div class="nutr-item">
+        <div class="nutr-name">Calcium (Ca)</div>
+        <div><span class="nutr-val">160</span><span class="nutr-unit"> ppm</span></div>
+        <div class="nutr-delta" style="color:var(--green)">✓ optimal</div>
+        <div class="nutr-bar"><div class="nutr-bar-fill" style="width:64%;background:var(--green)"></div></div>
+      </div>
+      <div class="nutr-item">
+        <div class="nutr-name">Magnesium (Mg)</div>
+        <div><span class="nutr-val">48</span><span class="nutr-unit"> ppm</span></div>
+        <div class="nutr-delta" style="color:var(--green)">✓ stable</div>
+        <div class="nutr-bar"><div class="nutr-bar-fill" style="width:55%;background:var(--green)"></div></div>
+      </div>
+      <div class="nutr-item">
+        <div class="nutr-name">Iron (Fe)</div>
+        <div><span class="nutr-val">3.1</span><span class="nutr-unit"> ppm</span></div>
+        <div class="nutr-delta" style="color:var(--green)">↑ recovering</div>
+        <div class="nutr-bar"><div class="nutr-bar-fill" style="width:62%;background:var(--green)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FERTIGATION TIMELINE -->
+  <div class="fert-panel">
+    <div class="panel-head">
+      <div class="panel-title">💊 Fertigation Schedule</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--amber)">Next in 2h 14m</div>
+    </div>
+    <div class="fert-timeline">
+      <div class="fert-event">
+        <div class="fert-dot done">✓</div>
+        <div class="fert-time">06:00</div>
+        <div class="fert-label">Morning</div>
+      </div>
+      <div class="fert-event">
+        <div class="fert-dot done">✓</div>
+        <div class="fert-time">10:00</div>
+        <div class="fert-label">Mid-AM</div>
+      </div>
+      <div class="fert-event">
+        <div class="fert-dot next">→</div>
+        <div class="fert-time">14:00</div>
+        <div class="fert-label">Afternoon</div>
+      </div>
+      <div class="fert-event">
+        <div class="fert-dot skip">○</div>
+        <div class="fert-time">18:00</div>
+        <div class="fert-label">Evening</div>
+      </div>
+      <div class="fert-event">
+        <div class="fert-dot skip">○</div>
+        <div class="fert-time">21:00</div>
+        <div class="fert-label">Night</div>
+      </div>
+    </div>
+    <div class="npk-row">
+      <div class="npk-box">
+        <div class="npk-el">N</div>
+        <div><span class="npk-val">180</span><span class="npk-unit"> ppm</span></div>
+        <div class="npk-status" style="color:var(--green)">↑ on target</div>
+      </div>
+      <div class="npk-box">
+        <div class="npk-el">P</div>
+        <div><span class="npk-val">42</span><span class="npk-unit"> ppm</span></div>
+        <div class="npk-status" style="color:var(--green)">✓ optimal</div>
+      </div>
+      <div class="npk-box">
+        <div class="npk-el">K</div>
+        <div><span class="npk-val">210</span><span class="npk-unit"> ppm</span></div>
+        <div class="npk-status" style="color:var(--amber)">↑ slight ↑</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BIOCONTROL -->
+  <div class="bio-panel">
+    <div class="panel-head">
+      <div class="panel-title">🛡 Biocontrol & Pest Status</div>
+      <div class="panel-badge" style="background:var(--green-dim);color:var(--green)">4/5 Done</div>
+    </div>
+    <div class="bio-grid">
+      <div class="bio-item">
+        <div class="bio-ico">🐛</div>
+        <div>
+          <div class="bio-name">Leaf Miners</div>
+          <div class="bio-val ok">Low</div>
+          <div class="bio-sub">↓ improving</div>
+        </div>
+      </div>
+      <div class="bio-item">
+        <div class="bio-ico">🍄</div>
+        <div>
+          <div class="bio-name">Fungal Risk</div>
+          <div class="bio-val warn">Moderate</div>
+          <div class="bio-sub">Watch Zone B</div>
+        </div>
+      </div>
+      <div class="bio-item">
+        <div class="bio-ico">🦠</div>
+        <div>
+          <div class="bio-name">Beneficial Microbes</div>
+          <div class="bio-val ok">Active</div>
+          <div class="bio-sub">Applied yesterday</div>
+        </div>
+      </div>
+      <div class="bio-item">
+        <div class="bio-ico">🔍</div>
+        <div>
+          <div class="bio-name">Pest Scouting</div>
+          <div class="bio-val warn">Pending</div>
+          <div class="bio-sub">Due today</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY'S ACTIONS -->
+  <div class="actions-panel">
+    <div class="panel-head">
+      <div class="panel-title">⚡ Today's Actions</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">2/5 done</div>
+    </div>
+    <div class="action-item done" onclick="toggleAction(this)">
+      <div class="action-check">✓</div>
+      <div class="action-pri low"></div>
+      <div class="action-content">
+        <div class="action-name">Morning fertigation completed</div>
+        <div class="action-meta">06:12 AM · Zone A, B, C</div>
+      </div>
+      <div class="action-tag" style="background:var(--green-dim);color:var(--green)">Done</div>
+    </div>
+    <div class="action-item done" onclick="toggleAction(this)">
+      <div class="action-check">✓</div>
+      <div class="action-pri low"></div>
+      <div class="action-content">
+        <div class="action-name">pH levels checked and logged</div>
+        <div class="action-meta">08:30 AM · All zones within target</div>
+      </div>
+      <div class="action-tag" style="background:var(--green-dim);color:var(--green)">Done</div>
+    </div>
+    <div class="action-item" onclick="toggleAction(this)">
+      <div class="action-check"></div>
+      <div class="action-pri high"></div>
+      <div class="action-content">
+        <div class="action-name">Flush Zone B — EC too high (2.9)</div>
+        <div class="action-meta">Plain water flush · 20 min · Zone B only</div>
+      </div>
+      <div class="action-tag" style="background:var(--red-dim);color:var(--red)">Urgent</div>
+    </div>
+    <div class="action-item" onclick="toggleAction(this)">
+      <div class="action-check"></div>
+      <div class="action-pri med"></div>
+      <div class="action-content">
+        <div class="action-name">Pest scouting walk — all zones</div>
+        <div class="action-meta">Check leaves for miners, fungal spots</div>
+      </div>
+      <div class="action-tag" style="background:var(--amber-dim);color:var(--amber)">Due Today</div>
+    </div>
+    <div class="action-item" onclick="toggleAction(this)">
+      <div class="action-check"></div>
+      <div class="action-pri low"></div>
+      <div class="action-content">
+        <div class="action-name">Evening biocontrol spray</div>
+        <div class="action-meta">After 6 PM · Apply Trichoderma solution</div>
+      </div>
+      <div class="action-tag" style="background:var(--border);color:var(--muted)">Planned</div>
+    </div>
+  </div>
+
+  <!-- VOICE LOG -->
+  <button class="voice-btn" onclick="showToast('🎙 Recording started... speak your report')">
+    <div class="voice-circle">🎙</div>
+    <div>
+      <div class="voice-text">Record Audio Field Report</div>
+      <div class="voice-sub">Staff can speak instead of type — no technical knowledge needed</div>
+    </div>
+    <div style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted)">TAP →</div>
+  </button>
+
+  <!-- COLLAPSIBLES -->
+  <div class="collapse" onclick="toggleCollapse(this)">
+    <div class="collapse-head">
+      <div class="collapse-lbl">📚 Knowledge Hub & Guides</div>
+      <div class="c-arrow">▾</div>
+    </div>
+    <div class="collapse-body">Reference guides, troubleshooting FAQs, turmeric cultivation best practices, and seasonal benchmarks. Tap topics below to expand.</div>
+  </div>
+  <div class="collapse" onclick="toggleCollapse(this)">
+    <div class="collapse-head">
+      <div class="collapse-lbl">🕰 Past Seasons Archive</div>
+      <div class="c-arrow">▾</div>
+    </div>
+    <div class="collapse-body">Historical yield data, crop health logs, and seasonal comparisons from previous growing cycles.</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════ WEEKLY VIEW ══════════════════ -->
+<div class="view" id="weekly">
+  <div class="chart-card">
+    <div class="chart-head">
+      <div class="chart-title">📈 EC Drift (7 days)</div>
+      <div class="chart-stat" style="color:var(--blue)">Avg 2.3 → ↑ Trend</div>
+    </div>
+    <div class="mini-chart" id="ecChart"></div>
+    <div class="bar-labels" id="ecLbls"></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-head">
+      <div class="chart-title">⚗️ pH Drift (7 days)</div>
+      <div class="chart-stat" style="color:var(--green)">Stable within range</div>
+    </div>
+    <div class="mini-chart" id="phChart"></div>
+    <div class="bar-labels" id="phLbls"></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-head">
+      <div class="chart-title">🛡 Biocontrol Completion</div>
+      <div class="chart-stat" style="color:var(--green)">↑ +13% vs last week</div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px;">
+      <div style="font-family:var(--serif);font-size:40px;font-weight:900;color:var(--green)">87%</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">this week vs 74% last</div>
+    </div>
+    <div style="height:8px;background:var(--border);border-radius:6px;overflow:hidden;">
+      <div style="width:87%;height:100%;background:var(--green);border-radius:6px;transition:width .6s"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-head">
+      <div class="chart-title">🔍 Pest Scouting Trend</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+        <div style="font-size:22px">🐛</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Leaf Miners</div>
+        <div style="font-family:var(--serif);font-size:20px;font-weight:700;color:var(--green)">Low</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--green)">↓ decreasing</div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+        <div style="font-size:22px">🍄</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Fungal Risk</div>
+        <div style="font-family:var(--serif);font-size:20px;font-weight:700;color:var(--amber)">Mod</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--amber)">↑ watch Zone B</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MONTHLY VIEW ══════════════════ -->
+<div class="view" id="monthly">
+  <div class="pheno-card">
+    <div class="panel-head">
+      <div class="panel-title">🌱 Phenology — Growth Stage</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--gold)">Week 11/32</div>
+    </div>
+    <div class="pheno-stages">
+      <div class="pstage done">Sprout</div>
+      <div class="pstage done">Vegetat.</div>
+      <div class="pstage cur">Tillering</div>
+      <div class="pstage fut">Rhizome</div>
+      <div class="pstage fut">Harvest</div>
+    </div>
+    <div class="pheno-sub">Current: <b>Tillering</b> · On schedule · Est. harvest in 21 weeks</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+    <div class="kcard">
+      <div class="kc-top"><div class="kc-ico-name"><span class="kc-ico">📤</span><span class="kc-name">Actual Spend</span></div></div>
+      <div class="kc-val-row"><span class="kc-val" style="font-size:24px;">₹1.8</span><span class="kc-unit">L</span></div>
+      <div class="kc-delta nc">Budget: ₹2.1L</div>
+    </div>
+    <div class="kcard">
+      <div class="kc-top"><div class="kc-ico-name"><span class="kc-ico">✅</span><span class="kc-name">Budget Used</span></div></div>
+      <div class="kc-val-row"><span class="kc-val" style="font-size:24px;">86</span><span class="kc-unit">%</span></div>
+      <div class="kc-delta up">↑ on track</div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-head">
+      <div class="chart-title">🌿 Biomass Accumulation</div>
+      <div class="chart-stat" style="color:var(--gold)">Target: 220g/plant</div>
+    </div>
+    <div class="mini-chart" id="bioChart"></div>
+    <div class="bar-labels" id="bioLbls"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ YEARLY VIEW ══════════════════ -->
+<div class="view" id="yearly">
+  <div class="roi-grid">
+    <div class="roi-item">
+      <div class="roi-name">Curcumin % — Var. A</div>
+      <div class="roi-val">4.2%</div>
+      <div class="roi-sub">Target 5.0% · ↑ 0.8 to go</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-name">Curcumin % — Var. B</div>
+      <div class="roi-val">3.7%</div>
+      <div class="roi-sub">Target 4.5% · Watch VPD</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-name">Yield vs Forecast</div>
+      <div class="roi-val">91%</div>
+      <div class="roi-sub">Forecast 12T · On Track</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-name">Break-even / kg</div>
+      <div class="roi-val">₹87</div>
+      <div class="roi-sub">Market ₹124/kg · Margin ↑</div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-head">
+      <div class="chart-title">📈 Monthly Yield (kg/zone)</div>
+    </div>
+    <div class="mini-chart" id="yldChart"></div>
+    <div class="bar-labels" id="yldLbls"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ CHILD VIEW ══════════════════ -->
+<div class="child-view" id="childView">
+  <div style="height:10px;"></div>
+  <div class="urgent-card">
+    <div class="urg-title">⚡ Urgent Actions Today</div>
+    <div class="urg-item">
+      <div class="urg-face">😐</div>
+      <div>
+        <div class="urg-text">Zone B needs water flush — EC too high</div>
+        <div class="urg-sub">Run plain water for 20 minutes in Zone B</div>
+      </div>
+    </div>
+    <div class="urg-item">
+      <div class="urg-face">⏳</div>
+      <div>
+        <div class="urg-text">Pest scouting walk not done yet</div>
+        <div class="urg-sub">Walk all 3 zones and check leaves</div>
+      </div>
+    </div>
+  </div>
+  <div class="task-card">
+    <div class="task-title">📋 Today's Tasks</div>
+    <div class="task-item done" onclick="toggleTask(this)">
+      <div class="task-chk">✓</div><div class="task-ico">💧</div>
+      <div class="task-lbl">Morning fertigation</div>
+    </div>
+    <div class="task-item done" onclick="toggleTask(this)">
+      <div class="task-chk">✓</div><div class="task-ico">⚗️</div>
+      <div class="task-lbl">Check pH levels</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-chk"></div><div class="task-ico">🚿</div>
+      <div class="task-lbl">Flush Zone B (urgent!)</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-chk"></div><div class="task-ico">🔍</div>
+      <div class="task-lbl">Pest scouting walk</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-chk"></div><div class="task-ico">🛡</div>
+      <div class="task-lbl">Evening biocontrol spray</div>
+    </div>
+  </div>
+  <div style="height:12px;"></div>
+  <button class="voice-btn" onclick="showToast('🎙 Recording... speak your report')">
+    <div class="voice-circle">🎙</div>
+    <div>
+      <div class="voice-text">Speak Your Field Report</div>
+      <div class="voice-sub">No typing needed</div>
+    </div>
+  </button>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-bg" id="shareModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📋 Daily Brief</div>
+      <button class="modal-close" onclick="closeShare()">✕</button>
+    </div>
+    <div class="share-card" id="shareCard">
+      <div class="sc-logo">
+        <span style="font-size:20px">🌿</span>
+        <div>
+          <div class="sc-logo-name">EliteHaldi</div>
+          <div class="sc-logo-date">Daily Brief · Mar 11, 2026 · 17:48</div>
+        </div>
+      </div>
+      <div class="sc-hi">
+        <div class="sc-hi-score">92</div>
+        <div class="sc-hi-right">
+          <div class="sc-state">🌱 GROWTH STATE</div>
+          <div class="sc-hi-delta">+3 from yesterday · 3/3 zones online</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:4px">⚠️ 2 alerts pending</div>
+        </div>
+      </div>
+      <div class="sc-kpis">
+        <div class="sc-kpi">
+          <div class="sc-kpi-n">VPD</div>
+          <div class="sc-kpi-v">0.94<span style="font-size:10px;color:var(--muted)"> kPa</span></div>
+          <div class="sc-kpi-d up">✓ Optimal</div>
+        </div>
+        <div class="sc-kpi">
+          <div class="sc-kpi-n">EC</div>
+          <div class="sc-kpi-v">2.4<span style="font-size:10px;color:var(--muted)"> mS</span></div>
+          <div class="sc-kpi-d up">↑ +0.2</div>
+        </div>
+        <div class="sc-kpi">
+          <div class="sc-kpi-n">pH</div>
+          <div class="sc-kpi-v">6.1</div>
+          <div class="sc-kpi-d up">→ Stable</div>
+        </div>
+        <div class="sc-kpi">
+          <div class="sc-kpi-n">Curcumin</div>
+          <div class="sc-kpi-v">4.2<span style="font-size:10px;color:var(--muted)">%</span></div>
+          <div class="sc-kpi-d up">↑ +0.3 wk</div>
+        </div>
+        <div class="sc-kpi">
+          <div class="sc-kpi-n">DO</div>
+          <div class="sc-kpi-v">8.1<span style="font-size:10px;color:var(--muted)"> mg/L</span></div>
+          <div class="sc-kpi-d up">✓ Good</div>
+        </div>
+        <div class="sc-kpi">
+          <div class="sc-kpi-n">Transpir.</div>
+          <div class="sc-kpi-v">3.8<span style="font-size:10px;color:var(--muted)"> L/m²</span></div>
+          <div class="sc-kpi-d dn">↓ -0.4</div>
+        </div>
+      </div>
+      <div class="sc-zones">
+        <div class="sc-zone ok"><div class="sc-zone-name">Zone A</div><div class="sc-zone-score ok">😊 88%</div></div>
+        <div class="sc-zone warn"><div class="sc-zone-name">Zone B</div><div class="sc-zone-score warn">😐 71%</div></div>
+        <div class="sc-zone ok"><div class="sc-zone-name">Zone C</div><div class="sc-zone-score ok">😊 85%</div></div>
+      </div>
+      <div class="sc-alerts">⚠️ Zone B EC=2.9 — flush needed<br>⏳ Pest scouting walk pending</div>
+      <div class="sc-footer">EliteHaldi Command Center v21 · himadeepguduru.github.io/elitehaldi</div>
+    </div>
+    <div class="copy-text-wrap">
+      <textarea class="copy-text-area" id="briefText" readonly>🌿 EliteHaldi Daily Brief — Mar 11, 2026
+Farm Health: 92% 🌱 GROWTH (+3 from yesterday)
+
+KPIs: VPD 0.94kPa ✓ | EC 2.4 ↑0.2 | pH 6.1 → | Curcumin 4.2% ↑
+Zones: A 😊88% | B 😐71% (EC high!) | C 😊85%
+Nutrient: N 180ppm ✓ | P 42 ✓ | K 210 ↑slight | DO 8.1 ✓
+
+⚠️ URGENT: Zone B EC=2.9 → flush 20min plain water
+⏳ PENDING: Pest scouting walk all zones
+
+2/3 Daily non-negotiables complete.
+Fertigation: 2/5 done · Next @ 14:00</textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn primary" onclick="copyBrief()">📋 Copy Text</button>
+      <button class="mbtn secondary" onclick="closeShare()">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <div class="bnav-item on" onclick="bnav('home',this)"><div class="ni">🏠</div>Home</div>
+  <div class="bnav-item" onclick="bnav('reports',this)"><div class="ni">📊</div>Reports</div>
+  <div class="bnav-item" onclick="bnav('zones',this)"><div class="ni">🗺</div>Zones</div>
+  <div class="bnav-item" onclick="bnav('log',this)"><div class="ni">📝</div>Log</div>
+  <div class="bnav-item" onclick="bnav('settings',this)"><div class="ni">⚙️</div>Settings</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Clock
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById('clock').textContent=
+    [n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
+},1000);
+
+// Health segments
+(()=>{
+  const s=document.getElementById('hisegs');
+  for(let i=0;i<10;i++){
+    const d=document.createElement('div');
+    d.className='hiseg'+(i<9?' on':'');
+    d.style.flex='1';
+    s.appendChild(d);
+  }
+})();
+
+// Tabs
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.getElementById(name).classList.add('on');
+}
+
+// Mode
+function setMode(m){
+  document.getElementById('ebtn').classList.toggle('on',m==='e');
+  document.getElementById('cbtn').classList.toggle('on',m==='c');
+  const expert=['hbanner','dailies','tabs',...Array.from(document.querySelectorAll('.view'))];
+  expert.forEach(el=>{
+    if(typeof el==='string'){
+      const e=document.getElementById(el);
+      if(e)e.style.display=m==='e'?'':'none';
+    } else { el.style.display=m==='e'?'':'none'; }
+  });
+  document.getElementById('hbanner').style.display=m==='e'?'grid':'none';
+  document.getElementById('dailies').style.display=m==='e'?'flex':'none';
+  document.getElementById('tabs').style.display=m==='e'?'flex':'none';
+  document.querySelectorAll('.view').forEach(v=>v.style.display=m==='e'?(v.classList.contains('on')?'block':'none'):'none');
+  const cv=document.getElementById('childView');
+  cv.style.display=m==='c'?'block':'none';
+  cv.classList.toggle('on',m==='c');
+}
+
+// Collapse
+function toggleCollapse(el){ el.classList.toggle('open'); }
+
+// Actions
+function toggleAction(el){ el.classList.toggle('done'); }
+function toggleTask(el){ el.classList.toggle('done'); }
+
+// Toast
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2800);
+}
+
+// Share modal
+function openShare(){ document.getElementById('shareModal').classList.add('on'); }
+function closeShare(){ document.getElementById('shareModal').classList.remove('on'); }
+document.getElementById('shareModal').addEventListener('click',function(e){
+  if(e.target===this)closeShare();
+});
+function copyBrief(){
+  const txt=document.getElementById('briefText').value;
+  navigator.clipboard.writeText(txt).catch(()=>{});
+  showToast('📋 Brief copied! Paste into WhatsApp or Slack.');
+  closeShare();
+}
+
+// Bottom nav
+function bnav(tab,el){
+  document.querySelectorAll('.bnav-item').forEach(n=>n.classList.remove('on'));
+  el.classList.add('on');
+  if(tab==='reports'){
+    const wt=document.querySelectorAll('.tab')[1];
+    switchTab('weekly',wt);
+  }
+}
+
+// Charts
+function buildChart(cid,lid,vals,min,max,color){
+  const c=document.getElementById(cid), l=document.getElementById(lid);
+  if(!c||!l)return;
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  vals.forEach((v,i)=>{
+    const pct=((v-min)/(max-min))*100;
+    const wrap=document.createElement('div'); wrap.style.flex='1';
+    const bar=document.createElement('div'); bar.className='bar';
+    const fill=document.createElement('div'); fill.className='bar-fill';
+    fill.style.cssText=`height:${pct}%;background:${i===vals.length-1?'var(--gold)':color};`;
+    bar.appendChild(fill); wrap.appendChild(bar); c.appendChild(wrap);
+    const lbl=document.createElement('div'); lbl.className='bar-lbl';
+    lbl.textContent=days[i]; l.appendChild(lbl);
+  });
+}
+buildChart('ecChart','ecLbls',[2.0,2.1,2.3,2.2,2.4,2.5,2.4],1.5,3.0,'var(--blue)');
+buildChart('phChart','phLbls',[6.0,6.1,6.1,6.2,6.1,6.0,6.1],5.5,7.0,'var(--green)');
+
+// Biomass monthly
+function buildBio(){
+  const c=document.getElementById('bioChart'),l=document.getElementById('bioLbls');
+  if(!c||!l)return;
+  const months=['Nov','Dec','Jan','Feb','Mar','Apr'];
+  const vals=[60,90,130,165,198,null];
+  months.forEach((m,i)=>{
+    const wrap=document.createElement('div'); wrap.style.flex='1';
+    const bar=document.createElement('div'); bar.className='bar';
+    if(vals[i]){
+      const fill=document.createElement('div'); fill.className='bar-fill';
+      fill.style.cssText=`height:${(vals[i]/220)*100}%;background:${i===4?'var(--gold)':'var(--green)'};`;
+      bar.appendChild(fill);
+    }
+    wrap.appendChild(bar); c.appendChild(wrap);
+    const lbl=document.createElement('div'); lbl.className='bar-lbl';
+    lbl.textContent=m; l.appendChild(lbl);
+  });
+}
+buildBio();
+
+// Yearly yield
+function buildYld(){
+  const c=document.getElementById('yldChart'),l=document.getElementById('yldLbls');
+  if(!c||!l)return;
+  const months=['J','F','M','A','M','J','J','A','S','O','N','D'];
+  const vals=[0,0,0,10,40,120,200,240,280,260,null,null];
+  months.forEach((m,i)=>{
+    const wrap=document.createElement('div'); wrap.style.flex='1';
+    const bar=document.createElement('div'); bar.className='bar';
+    if(vals[i]){
+      const fill=document.createElement('div'); fill.className='bar-fill';
+      fill.style.cssText=`height:${(vals[i]/300)*100}%;background:var(--gold);`;
+      bar.appendChild(fill);
+    }
+    wrap.appendChild(bar); c.appendChild(wrap);
+    const lbl=document.createElement('div'); lbl.className='bar-lbl';
+    lbl.textContent=m; l.appendChild(lbl);
+  });
+}
+buildYld();
+</script>
+</body>
+</html>

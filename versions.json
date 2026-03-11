@@ -1,7 +1,7 @@
 {
   "project": "EliteHaldi Command Center",
-  "stable": "v19",
-  "latest": "v20",
+  "stable": "v21",
+  "latest": "v21",
   "versions": [
     {
       "version": "v16",
@@ -37,8 +37,8 @@
       "version": "v19",
       "file": "versions/v19.html",
       "date": "2026-03-10",
-      "status": "stable",
-      "tag": "production",
+      "status": "archived",
+      "tag": "archived",
       "changelog": [
         "Last known stable build"
       ]
