@@ -1,25 +1,64 @@
 {
   "project": "EliteHaldi Command Center",
-  "stable": "v20",
+  "stable": "v19",
   "latest": "v20",
   "versions": [
+    {
+      "version": "v16",
+      "file": "versions/v16.html",
+      "date": "2026-03-10",
+      "status": "archived",
+      "tag": "archived",
+      "changelog": [
+        "Early build"
+      ]
+    },
+    {
+      "version": "v17",
+      "file": "versions/v17.html",
+      "date": "2026-03-10",
+      "status": "archived",
+      "tag": "archived",
+      "changelog": [
+        "Iteration on v16"
+      ]
+    },
+    {
+      "version": "v18",
+      "file": "versions/v18.html",
+      "date": "2026-03-10",
+      "status": "archived",
+      "tag": "archived",
+      "changelog": [
+        "Iteration on v17"
+      ]
+    },
+    {
+      "version": "v19",
+      "file": "versions/v19.html",
+      "date": "2026-03-10",
+      "status": "stable",
+      "tag": "production",
+      "changelog": [
+        "Last known stable build"
+      ]
+    },
     {
       "version": "v20",
       "file": "versions/v20.html",
       "date": "2026-03-11",
-      "status": "stable",
-      "tag": "production",
+      "status": "dev",
+      "tag": "testing",
       "changelog": [
-        "Farm Health Index (0-100%) with traffic light system",
-        "VPD Stress Meter as first visible element",
-        "Dynamic tooltips on all KPIs",
-        "Range bars with gold needle marker + delta arrows",
-        "Time-phased tabs: Daily / Weekly / Monthly / Yearly",
-        "Child/Simplified mode with face system",
-        "Copy Daily Brief button (WhatsApp/Slack ready)",
-        "Voice log button for non-technical staff",
-        "Phenology stage tracker",
-        "Knowledge Hub + Past Seasons collapsed to sidebar"
+        "Farm Health Index",
+        "VPD Stress Meter",
+        "Dynamic tooltips",
+        "Range bars",
+        "Time-phased tabs",
+        "Child mode",
+        "Copy Daily Brief",
+        "Voice log",
+        "Phenology tracker"
       ]
     }
   ]
