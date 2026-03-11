@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EliteHaldi Command Center v20</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f0c;
+    --surface: #141712;
+    --card: #1a1e18;
+    --border: #2a2f27;
+    --gold: #c9a227;
+    --gold-dim: #8a6e18;
+    --green: #4caf6e;
+    --red: #e05252;
+    --amber: #e09a38;
+    --blue: #5b9bd5;
+    --text: #e8e4d9;
+    --muted: #7a7d72;
+    --serif: 'Fraunces', Georgia, serif;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Instrument Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  /* ── MODE TOGGLE ── */
+  .mode-toggle {
+    position: fixed;
+    top: 14px;
+    right: 16px;
+    z-index: 100;
+    display: flex;
+    gap: 6px;
+  }
+  .mode-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: .05em;
+  }
+  .mode-btn.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #000;
+    font-weight: 600;
+  }
+
+  /* ── TOP HEADER ── */
+  .header {
+    position: relative;
+    z-index: 1;
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .brand-name {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: -.02em;
+  }
+  .brand-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .header-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  /* ── FARM HEALTH INDEX ── */
+  .health-banner {
+    position: relative;
+    z-index: 1;
+    margin: 16px 20px 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    overflow: hidden;
+  }
+  .health-banner::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--green);
+    border-radius: 4px 0 0 4px;
+  }
+  .health-score-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+  }
+  .health-score {
+    font-family: var(--serif);
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--green);
+  }
+  .health-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .health-bar-wrap {
+    flex: 1;
+  }
+  .health-state {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .state-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(76,175,110,.15);
+    color: var(--green);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .state-badge.warn { background: rgba(224,154,56,.15); color: var(--amber); }
+  .state-badge.crisis { background: rgba(224,82,82,.15); color: var(--red); }
+  .health-segments {
+    display: flex;
+    gap: 3px;
+    height: 8px;
+  }
+  .seg {
+    flex: 1;
+    border-radius: 4px;
+    background: var(--border);
+    transition: background .4s;
+  }
+  .seg.filled { background: var(--green); }
+  .seg.filled-warn { background: var(--amber); }
+  .health-meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .meta-item {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .meta-item span { color: var(--text); font-weight: 600; }
+  .briefing-btn {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    transition: all .2s;
+    text-align: center;
+  }
+  .briefing-btn:hover { background: #e8b930; transform: scale(1.02); }
+  .briefing-btn .icon { font-size: 14px; display: block; margin-bottom: 2px; }
+
+  /* ── DAILY NON-NEGOTIABLES ── */
+  .nonneg {
+    position: relative;
+    z-index: 1;
+    margin: 10px 20px 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .nonneg-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    min-width: 80px;
+  }
+  .nonneg-items { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+  .nn-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--mono);
+    border: 1px solid;
+  }
+  .nn-item.done { background: rgba(76,175,110,.1); border-color: rgba(76,175,110,.3); color: var(--green); }
+  .nn-item.pending { background: rgba(224,154,56,.1); border-color: rgba(224,154,56,.3); color: var(--amber); }
+  .nn-item.miss { background: rgba(224,82,82,.1); border-color: rgba(224,82,82,.3); color: var(--red); }
+  .score-badge {
+    margin-left: auto;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .score-badge small { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  /* ── TIME SCALE TABS ── */
+  .tabs {
+    position: relative;
+    z-index: 1;
+    margin: 14px 20px 0;
+    display: flex;
+    gap: 4px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all .2s;
+  }
+  .tab.active {
+    background: var(--border);
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .content {
+    position: relative;
+    z-index: 1;
+    padding: 12px 20px 100px;
+    display: none;
+    animation: fadeIn .25s ease;
+  }
+  .content.visible { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ── KPI GRID ── */
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card .help-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--muted);
+    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-family: var(--serif);
+    font-weight: 700;
+    transition: background .2s;
+  }
+  .kpi-card .help-icon:hover { background: var(--gold-dim); color: var(--gold); }
+
+  .kpi-emoji { font-size: 16px; margin-bottom: 4px; }
+  .kpi-name {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .kpi-value {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+  }
+  .kpi-unit { font-size: 14px; color: var(--muted); font-family: var(--mono); }
+  .kpi-delta {
+    font-family: var(--mono);
+    font-size: 10px;
+    margin-top: 4px;
+    font-weight: 600;
+  }
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-delta.neutral { color: var(--muted); }
+
+  /* Range bar */
+  .range-bar-wrap { margin-top: 8px; }
+  .range-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .range-bar {
+    position: relative;
+    height: 6px;
+    background: var(--border);
+    border-radius: 6px;
+    overflow: visible;
+  }
+  .range-zone {
+    position: absolute;
+    height: 100%;
+    background: rgba(76,175,110,.25);
+    border-radius: 6px;
+  }
+  .range-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 8px rgba(201,162,39,.5);
+    transition: left .4s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  /* Tooltip */
+  .tooltip-wrap { position: relative; }
+  .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2620;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    width: 200px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text);
+    z-index: 50;
+    box-shadow: 0 8px 32px rgba(0,0,0,.6);
+  }
+  .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--border);
+  }
+  .help-icon:hover .tooltip,
+  .tooltip-wrap:hover .tooltip { display: block; }
+
+  /* VPD STRESS METER - full width */
+  .vpd-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .vpd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .vpd-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .vpd-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .vpd-val {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .vpd-unit { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .vpd-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+  }
+  .pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .4; transform: scale(1.3); }
+  }
+
+  .vpd-meter {
+    position: relative;
+    height: 12px;
+    background: linear-gradient(to right, #3b82f6 0%, #4caf6e 30%, #4caf6e 60%, #e09a38 75%, #e05252 100%);
+    border-radius: 8px;
+    overflow: visible;
+    margin: 0 8px;
+  }
+  .vpd-needle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--gold);
+    box-shadow: 0 0 12px rgba(201,162,39,.6);
+    transition: left .6s cubic-bezier(.34,1.56,.64,1);
+  }
+  .vpd-zones {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    padding: 0 8px;
+  }
+
+  /* ZONE CARDS */
+  .zone-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .zone-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+  .zone-face { font-size: 28px; line-height: 1; margin-bottom: 4px; }
+  .zone-name {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .zone-score {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .zone-score.good { color: var(--green); }
+  .zone-score.warn { color: var(--amber); }
+  .zone-score.bad { color: var(--red); }
+  .zone-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    margin-top: 3px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .zone-tag.good { background: rgba(76,175,110,.1); color: var(--green); }
+  .zone-tag.warn { background: rgba(224,154,56,.1); color: var(--amber); }
+  .zone-tag.bad { background: rgba(224,82,82,.1); color: var(--red); }
+
+  /* SECTION HEADERS */
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 16px 0 10px;
+  }
+  .section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* CHART PLACEHOLDER */
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .chart-head {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .mini-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 60px;
+  }
+  .bar {
+    flex: 1;
+    background: var(--border);
+    border-radius: 4px 4px 0 0;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .bar:hover { background: var(--gold-dim); }
+  .bar-fill {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height .6s cubic-bezier(.34,1.56,.64,1);
+  }
+  .bar-label {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* PHENOLOGY */
+  .pheno-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .pheno-stages {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 12px 0 8px;
+  }
+  .pheno-stage {
+    flex: 1;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: .05em;
+    border-radius: 4px;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--border);
+    transition: all .3s;
+  }
+  .pheno-stage.done { background: rgba(76,175,110,.2); color: var(--green); }
+  .pheno-stage.current {
+    background: var(--gold);
+    color: #000;
+    font-weight: 700;
+    transform: scaleY(1.15);
+    z-index: 1;
+  }
+  .pheno-stage.future { opacity: .4; }
+  .pheno-label { font-size: 11px; color: var(--muted); }
+  .pheno-label strong { color: var(--gold); font-family: var(--serif); }
+
+  /* ROI CARD */
+  .roi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .roi-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .roi-name { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; }
+  .roi-val { font-family: var(--serif); font-size: 24px; font-weight: 700; color: var(--gold); }
+  .roi-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* VOICE LOG */
+  .voice-btn {
+    width: 100%;
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color .2s;
+    margin-bottom: 12px;
+  }
+  .voice-btn:hover { border-color: var(--gold); }
+  .voice-circle {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: rgba(201,162,39,.1);
+    border: 1px solid var(--gold-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .voice-text { font-size: 13px; color: var(--text); }
+  .voice-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* SIMPLIFIED CHILD VIEW */
+  .child-view { display: none; }
+  .child-view.visible { display: block; }
+  .expert-view.child-hidden { display: none; }
+
+  .urgent-card {
+    background: var(--card);
+    border: 2px solid var(--amber);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .urgent-card::before {
+    content: '⚠️';
+    position: absolute;
+    top: -10px;
+    right: -5px;
+    font-size: 80px;
+    opacity: .05;
+  }
+  .urgent-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--amber);
+    margin-bottom: 12px;
+  }
+  .urgent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .urgent-item:last-child { border-bottom: none; }
+  .urgent-face { font-size: 24px; }
+  .urgent-text { font-size: 13px; color: var(--text); line-height: 1.4; }
+  .urgent-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .task-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .task-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+    flex-shrink: 0;
+  }
+  .task-item.done .task-check {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .task-label { font-size: 14px; color: var(--text); }
+  .task-item.done .task-label { text-decoration: line-through; color: var(--muted); }
+  .task-emoji { font-size: 18px; }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(20, 23, 18, .95);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 50;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0 8px;
+    cursor: pointer;
+    transition: color .2s;
+    color: var(--muted);
+    text-decoration: none;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .nav-item .icon { font-size: 20px; margin-bottom: 3px; }
+  .nav-item.active { color: var(--gold); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1f2620;
+    border: 1px solid var(--gold-dim);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--gold);
+    max-width: 320px;
+    width: 90%;
+    z-index: 200;
+    opacity: 0;
+    transition: all .3s;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* COLLAPSIBLES */
+  .collapsible {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .collapsible-head {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+  .collapsible-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .collapsible-arrow { transition: transform .3s; color: var(--muted); }
+  .collapsible.open .collapsible-arrow { transform: rotate(180deg); }
+  .collapsible-body {
+    display: none;
+    padding: 0 16px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .collapsible.open .collapsible-body { display: block; }
+
+</style>
+</head>
+<body>
+
+<!-- Mode Toggle -->
+<div class="mode-toggle">
+  <button class="mode-btn active" id="expertBtn" onclick="setMode('expert')">Expert</button>
+  <button class="mode-btn" id="childBtn" onclick="setMode('child')">Simple</button>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="brand">
+    <div class="brand-name">🌿 EliteHaldi</div>
+    <div class="brand-tag">Command Center v20</div>
+  </div>
+  <div class="header-date">
+    <div id="liveDate">Mar 11, 2026</div>
+    <div id="liveClock" style="font-size:13px;color:var(--text);">--:--</div>
+  </div>
+</div>
+
+<!-- Farm Health Index -->
+<div class="health-banner">
+  <div class="health-score-wrap">
+    <div class="health-score" id="healthScore">92</div>
+    <div class="health-label">Farm Health</div>
+  </div>
+  <div class="health-bar-wrap">
+    <div class="health-state">
+      <div class="state-badge" id="stateBadge">🌱 Growth</div>
+      <div style="font-size:11px;color:var(--muted);">+3 from yesterday</div>
+    </div>
+    <div class="health-segments" id="healthSegs"></div>
+    <div class="health-meta">
+      <div class="meta-item">Zones: <span>3/3 Online</span></div>
+      <div class="meta-item">Alerts: <span style="color:var(--amber)">2 Pending</span></div>
+    </div>
+  </div>
+  <button class="briefing-btn" onclick="copyBriefing()">
+    <span class="icon">📋</span>Copy Brief
+  </button>
+</div>
+
+<!-- 3 Daily Non-Negotiables -->
+<div class="nonneg">
+  <div class="nonneg-label">3 Dailies</div>
+  <div class="nonneg-items">
+    <div class="nn-item done">✓ Fertigation</div>
+    <div class="nn-item done">✓ pH Check</div>
+    <div class="nn-item pending">⏳ Scouting</div>
+  </div>
+  <div class="score-badge">2<small>/3</small></div>
+</div>
+
+<!-- Time Scale Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('daily', this)">Daily</div>
+  <div class="tab" onclick="switchTab('weekly', this)">Weekly</div>
+  <div class="tab" onclick="switchTab('monthly', this)">Monthly</div>
+  <div class="tab" onclick="switchTab('yearly', this)">Yearly</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--                DAILY VIEW              -->
+<!-- ═══════════════════════════════════════ -->
+<div class="content visible expert-view" id="daily">
+
+  <!-- VPD Stress Meter — FIRST for consultants -->
+  <div style="height:12px;"></div>
+  <div class="vpd-card">
+    <div class="vpd-header">
+      <div class="vpd-title">
+        <span style="font-size:18px">💨</span>
+        <div>
+          <div class="vpd-label">VPD Stress Meter
+            <span class="tooltip-wrap" style="display:inline-block;margin-left:4px;cursor:pointer;">
+              <span style="font-family:var(--serif);font-size:10px;background:var(--border);padding:1px 6px;border-radius:8px;color:var(--muted);">?</span>
+              <div class="tooltip">VPD (Vapour Pressure Deficit) drives transpiration. Low VPD = waterlogged roots. High VPD = drought stress. Optimal: 0.8–1.2 kPa for turmeric.</div>
+            </span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:6px;">
+            <div class="vpd-val">0.94</div>
+            <div class="vpd-unit">kPa</div>
+          </div>
+        </div>
+      </div>
+      <div class="vpd-status">
+        <div class="pulse"></div>
+        Optimal ↓0.02
+      </div>
+    </div>
+    <div class="vpd-meter">
+      <div class="vpd-needle" style="left: 42%"></div>
+    </div>
+    <div class="vpd-zones">
+      <span>Sat 0.4</span>
+      <span>Optimal →</span>
+      <span>Stress 1.5</span>
+      <span>Danger 2.0+</span>
+    </div>
+  </div>
+
+  <!-- KPI Grid -->
+  <div class="section-head">
+    <div class="section-title">🧪 Nutrient KPIs</div>
+  </div>
+  <div class="kpi-grid">
+
+    <!-- EC -->
+    <div class="kpi-card">
+      <div class="tooltip-wrap">
+        <div class="help-icon">?
+          <div class="tooltip">High EC (>3.0) causes salt stress, blocking water uptake. Low EC (<1.5) means nutrient deficiency. 2.4 is ideal for vegetative stage.</div>
+        </div>
+      </div>
+      <div class="kpi-emoji">🧪</div>
+      <div class="kpi-name">EC Level</div>
+      <div><span class="kpi-value">2.4</span><span class="kpi-unit"> mS/cm</span></div>
+      <div class="kpi-delta up">↑ 0.2 from yesterday</div>
+      <div class="range-bar-wrap">
+        <div class="range-label"><span>1.5 min</span><span>3.0 max</span></div>
+        <div class="range-bar">
+          <div class="range-zone" style="left:0;width:100%;"></div>
+          <div class="range-marker" style="left: 60%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- pH -->
+    <div class="kpi-card">
+      <div class="tooltip-wrap">
+        <div class="help-icon">?
+          <div class="tooltip">High pH (>7.0) locks out phosphorus and iron. Turmeric needs pH 5.5–6.5. Current 6.1 is excellent for nutrient uptake.</div>
+        </div>
+      </div>
+      <div class="kpi-emoji">⚗️</div>
+      <div class="kpi-name">pH Level</div>
+      <div><span class="kpi-value">6.1</span><span class="kpi-unit"> pH</span></div>
+      <div class="kpi-delta neutral">→ No change today</div>
+      <div class="range-bar-wrap">
+        <div class="range-label"><span>5.5 min</span><span>6.5 max</span></div>
+        <div class="range-bar">
+          <div class="range-zone" style="left:0;width:100%;"></div>
+          <div class="range-marker" style="left: 60%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transpiration -->
+    <div class="kpi-card">
+      <div class="tooltip-wrap">
+        <div class="help-icon">?
+          <div class="tooltip">High transpiration with low water availability causes wilting. Monitor alongside VPD — if VPD rises above 1.3, increase irrigation frequency.</div>
+        </div>
+      </div>
+      <div class="kpi-emoji">💧</div>
+      <div class="kpi-name">Transpiration</div>
+      <div><span class="kpi-value">3.8</span><span class="kpi-unit"> L/m²/d</span></div>
+      <div class="kpi-delta down">↓ 0.4 from yesterday</div>
+      <div class="range-bar-wrap">
+        <div class="range-label"><span>2.0</span><span>6.0</span></div>
+        <div class="range-bar">
+          <div class="range-zone" style="left:0;width:100%;"></div>
+          <div class="range-marker" style="left: 47%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Curcumin -->
+    <div class="kpi-card">
+      <div class="tooltip-wrap">
+        <div class="help-icon">?
+          <div class="tooltip">Curcumin % is your market value KPI. Stress during rhizome development (weeks 14–20) directly reduces curcumin. Keep stress indicators green to protect this number.</div>
+        </div>
+      </div>
+      <div class="kpi-emoji">🟡</div>
+      <div class="kpi-name">Curcumin %
+        <span class="tooltip-wrap" style="display:inline-block;margin-left:2px;cursor:pointer;">
+          <span style="font-family:var(--serif);font-size:9px;background:var(--border);padding:0px 5px;border-radius:4px;color:var(--gold);font-weight:600;">VPD</span>
+          <div class="tooltip">VPD (Vapour Pressure Deficit): the "drying power" of air. Controls how fast leaves lose water. Affects curcumin production under stress.</div>
+        </span>
+      </div>
+      <div><span class="kpi-value">4.2</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-delta up">↑ 0.3 this week</div>
+      <div class="range-bar-wrap">
+        <div class="range-label"><span>3.0 min</span><span>6.0 target</span></div>
+        <div class="range-bar">
+          <div class="range-zone" style="left:0;width:100%;"></div>
+          <div class="range-marker" style="left: 40%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone Status with Face System -->
+  <div class="section-head">
+    <div class="section-title">🗺 Zone Health</div>
+  </div>
+  <div class="zone-grid">
+    <div class="zone-card">
+      <div class="zone-face">😊</div>
+      <div class="zone-name">Zone A</div>
+      <div class="zone-score good">88%</div>
+      <div class="zone-tag good">Healthy</div>
+    </div>
+    <div class="zone-card">
+      <div class="zone-face">😐</div>
+      <div class="zone-name">Zone B</div>
+      <div class="zone-score warn">71%</div>
+      <div class="zone-tag warn">EC High</div>
+    </div>
+    <div class="zone-card">
+      <div class="zone-face">😊</div>
+      <div class="zone-name">Zone C</div>
+      <div class="zone-score good">85%</div>
+      <div class="zone-tag good">Stable</div>
+    </div>
+  </div>
+
+  <!-- Fertigation -->
+  <div class="section-head"><div class="section-title">💊 Fertigation Status</div></div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="grid-column:1/-1">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="font-size:16px">🕐</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Next Fertigation</div>
+        <div style="margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--amber)">in 2h 14m</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:100px;background:var(--border);border-radius:8px;padding:8px 10px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase">N</div>
+          <div style="font-family:var(--serif);font-size:18px;color:var(--text)">180 <span style="font-size:10px;color:var(--muted)">ppm</span></div>
+          <div style="font-size:10px;color:var(--green)">↑ on target</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:var(--border);border-radius:8px;padding:8px 10px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase">P</div>
+          <div style="font-family:var(--serif);font-size:18px;color:var(--text)">42 <span style="font-size:10px;color:var(--muted)">ppm</span></div>
+          <div style="font-size:10px;color:var(--green)">✓ optimal</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:var(--border);border-radius:8px;padding:8px 10px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase">K</div>
+          <div style="font-family:var(--serif);font-size:18px;color:var(--text)">210 <span style="font-size:10px;color:var(--muted)">ppm</span></div>
+          <div style="font-size:10px;color:var(--amber)">↑ slight high</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Biocontrol -->
+  <div class="section-head"><div class="section-title">🛡 Biocontrol</div></div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-emoji">🛡</div>
+      <div class="kpi-name">Checklist</div>
+      <div><span class="kpi-value">4</span><span class="kpi-unit">/5</span></div>
+      <div class="kpi-delta up">1 item pending</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-emoji">🔍</div>
+      <div class="kpi-name">Pest Score</div>
+      <div><span class="kpi-value">Low</span></div>
+      <div class="kpi-delta up">↓ improving</div>
+    </div>
+  </div>
+
+  <!-- Voice Log -->
+  <button class="voice-btn" onclick="voiceLog()">
+    <div class="voice-circle">🎙</div>
+    <div>
+      <div class="voice-text">Record Audio Note</div>
+      <div class="voice-sub">Speak your field report instead of typing</div>
+    </div>
+    <div style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted)">TAP →</div>
+  </button>
+
+  <!-- Collapsibles -->
+  <div class="collapsible" onclick="toggleCollapse(this)">
+    <div class="collapsible-head">
+      <div class="collapsible-label">📚 Knowledge Hub</div>
+      <div class="collapsible-arrow">▾</div>
+    </div>
+    <div class="collapsible-body">
+      Reference guides, troubleshooting FAQs, and best practice documents for turmeric cultivation. Tap to expand specific topics.
+    </div>
+  </div>
+  <div class="collapsible" onclick="toggleCollapse(this)">
+    <div class="collapsible-head">
+      <div class="collapsible-label">🕰 Past Seasons</div>
+      <div class="collapsible-arrow">▾</div>
+    </div>
+    <div class="collapsible-body">
+      Historical yield data, crop health logs, and seasonal benchmarks from previous growing cycles.
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--               WEEKLY VIEW              -->
+<!-- ═══════════════════════════════════════ -->
+<div class="content expert-view" id="weekly">
+
+  <!-- EC/pH Drift Chart -->
+  <div style="height:12px;"></div>
+  <div class="chart-card">
+    <div class="chart-head">
+      <span>📈 Weekly EC Drift</span>
+      <span style="color:var(--green)">Avg 2.3 → Trend ↑</span>
+    </div>
+    <div class="mini-chart" id="ecChart"></div>
+    <div style="display:flex;gap:4px;margin-top:4px;" id="ecLabels"></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-head">
+      <span>⚗️ Weekly pH Drift</span>
+      <span style="color:var(--muted)">Stable within range</span>
+    </div>
+    <div class="mini-chart" id="phChart"></div>
+    <div style="display:flex;gap:4px;margin-top:4px;" id="phLabels"></div>
+  </div>
+
+  <!-- Biocontrol Completion Rate -->
+  <div class="section-head"><div class="section-title">🛡 Biocontrol Completion Rate</div></div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="grid-column:1/-1">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
+        <div><div class="kpi-name">This Week</div><div><span class="kpi-value">87</span><span class="kpi-unit">%</span></div></div>
+        <div><div class="kpi-name">Last Week</div><div><span class="kpi-value" style="font-size:20px;color:var(--muted)">74</span><span class="kpi-unit">%</span></div></div>
+        <div class="kpi-delta up" style="font-size:14px">↑ +13%</div>
+      </div>
+      <div class="range-bar">
+        <div class="range-zone" style="left:0;width:100%;background:rgba(76,175,110,.15)"></div>
+        <div class="range-marker" style="left:87%;background:var(--green)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pest Scouting Trend -->
+  <div class="section-head"><div class="section-title">🔍 Pest Scouting Trend</div></div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-emoji">🐛</div>
+      <div class="kpi-name">Leaf Miners</div>
+      <div><span class="kpi-value">Low</span></div>
+      <div class="kpi-delta up">↓ decreasing</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-emoji">🍄</div>
+      <div class="kpi-name">Fungal Risk</div>
+      <div><span class="kpi-value">Mod</span></div>
+      <div class="kpi-delta down">↑ watch zone B</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--              MONTHLY VIEW              -->
+<!-- ═══════════════════════════════════════ -->
+<div class="content expert-view" id="monthly">
+  <div style="height:12px;"></div>
+
+  <!-- Phenology -->
+  <div class="pheno-card">
+    <div class="chart-head"><span>🌱 Growth Stage (Phenology)</span></div>
+    <div class="pheno-stages">
+      <div class="pheno-stage done">Sprout</div>
+      <div class="pheno-stage done">Vegetat.</div>
+      <div class="pheno-stage current">Tillering</div>
+      <div class="pheno-stage future">Rhizome</div>
+      <div class="pheno-stage future">Harvest</div>
+    </div>
+    <div class="pheno-label">Current: <strong>Tillering</strong> · Target Stage on schedule · Week 11 of 32</div>
+  </div>
+
+  <!-- OpEx Budget -->
+  <div class="section-head"><div class="section-title">💰 Monthly OpEx vs Budget</div></div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-emoji">📤</div>
+      <div class="kpi-name">Actual Spend</div>
+      <div><span class="kpi-value">₹1.8</span><span class="kpi-unit">L</span></div>
+      <div class="kpi-delta neutral">Budget: ₹2.1L</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-emoji">✅</div>
+      <div class="kpi-name">Budget Used</div>
+      <div><span class="kpi-value">86</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-delta up">↑ on track</div>
+    </div>
+  </div>
+
+  <!-- Biomass -->
+  <div class="section-head"><div class="section-title">🌿 Biomass Accumulation</div></div>
+  <div class="chart-card">
+    <div class="chart-head"><span>Monthly Growth (g/plant)</span><span style="color:var(--green)">Target: 220g</span></div>
+    <div class="mini-chart" id="bioChart"></div>
+    <div style="display:flex;gap:4px;margin-top:4px;" id="bioLabels"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--               YEARLY VIEW              -->
+<!-- ═══════════════════════════════════════ -->
+<div class="content expert-view" id="yearly">
+  <div style="height:12px;"></div>
+
+  <!-- ROI Cards -->
+  <div class="section-head"><div class="section-title">📊 Strategic ROI</div></div>
+  <div class="roi-grid">
+    <div class="roi-item">
+      <div class="roi-name">Curcumin % — Variety A</div>
+      <div class="roi-val">4.2%</div>
+      <div class="roi-sub">Target: 5.0% · ↑ 0.8 to go</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-name">Curcumin % — Variety B</div>
+      <div class="roi-val">3.7%</div>
+      <div class="roi-sub">Target: 4.5% · Watch VPD</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-name">Total Yield vs Forecast</div>
+      <div class="roi-val">91%</div>
+      <div class="roi-sub">Forecast: 12T · On Track</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-name">Break-even Price</div>
+      <div class="roi-val">₹87</div>
+      <div class="roi-sub">per kg · Market: ₹124/kg</div>
+    </div>
+  </div>
+
+  <!-- Year chart -->
+  <div class="chart-card">
+    <div class="chart-head"><span>📈 Yield by Month (kg/zone)</span></div>
+    <div class="mini-chart" id="yldChart"></div>
+    <div style="display:flex;gap:4px;margin-top:4px;" id="yldLabels"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--           SIMPLIFIED CHILD VIEW        -->
+<!-- ═══════════════════════════════════════ -->
+<div class="child-view" id="childView" style="padding:12px 20px 100px;position:relative;z-index:1;">
+  <div style="height:12px;"></div>
+
+  <!-- Urgent Action Card -->
+  <div class="urgent-card">
+    <div class="urgent-title">⚡ Today's Urgent Actions</div>
+    <div class="urgent-item">
+      <div class="urgent-face">😐</div>
+      <div>
+        <div class="urgent-text">Zone B needs attention — EC is too high</div>
+        <div class="urgent-sub">Flush with plain water for 20 minutes</div>
+      </div>
+    </div>
+    <div class="urgent-item">
+      <div class="urgent-face">⏳</div>
+      <div>
+        <div class="urgent-text">Pest scouting not done yet today</div>
+        <div class="urgent-sub">Walk zones A, B, C and check leaves</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task List -->
+  <div class="task-card">
+    <div class="task-title">📋 Today's Task List</div>
+    <div class="task-item done" onclick="toggleTask(this)">
+      <div class="task-check">✓</div>
+      <div class="task-emoji">💧</div>
+      <div class="task-label">Morning fertigation — done</div>
+    </div>
+    <div class="task-item done" onclick="toggleTask(this)">
+      <div class="task-check">✓</div>
+      <div class="task-emoji">⚗️</div>
+      <div class="task-label">Check pH levels</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-emoji">🔍</div>
+      <div class="task-label">Pest scouting walk</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-emoji">🌡️</div>
+      <div class="task-label">Record Zone B temperature</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-emoji">💊</div>
+      <div class="task-label">Evening biocontrol spray</div>
+    </div>
+  </div>
+
+  <div style="height:12px;"></div>
+
+  <!-- Voice Log in child mode too -->
+  <button class="voice-btn" onclick="voiceLog()">
+    <div class="voice-circle">🎙</div>
+    <div>
+      <div class="voice-text">Speak Your Field Report</div>
+      <div class="voice-sub">No typing needed — just talk</div>
+    </div>
+  </button>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="bottomNav('home', this)">
+    <div class="icon">🏠</div>
+    <div>Home</div>
+  </div>
+  <div class="nav-item" onclick="bottomNav('reports', this)">
+    <div class="icon">📊</div>
+    <div>Reports</div>
+  </div>
+  <div class="nav-item" onclick="bottomNav('zones', this)">
+    <div class="icon">🗺</div>
+    <div>Zones</div>
+  </div>
+  <div class="nav-item" onclick="bottomNav('log', this)">
+    <div class="icon">📝</div>
+    <div>Log</div>
+  </div>
+  <div class="nav-item" onclick="bottomNav('settings', this)">
+    <div class="icon">⚙️</div>
+    <div>Settings</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // Clock
+  function tick() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2,'0');
+    const m = now.getMinutes().toString().padStart(2,'0');
+    const s = now.getSeconds().toString().padStart(2,'0');
+    document.getElementById('liveClock').textContent = `${h}:${m}:${s}`;
+  }
+  tick(); setInterval(tick, 1000);
+
+  // Health segments
+  (function() {
+    const score = 92;
+    const segs = document.getElementById('healthSegs');
+    const total = 10;
+    const filled = Math.round(score / 10);
+    for (let i = 0; i < total; i++) {
+      const s = document.createElement('div');
+      s.className = 'seg' + (i < filled ? ' filled' : '');
+      segs.appendChild(s);
+    }
+  })();
+
+  // Tabs
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.content.expert-view').forEach(c => c.classList.remove('visible'));
+    const target = document.getElementById(name);
+    if (target) target.classList.add('visible');
+  }
+
+  // Mode toggle
+  let currentMode = 'expert';
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('expertBtn').classList.toggle('active', mode === 'expert');
+    document.getElementById('childBtn').classList.toggle('active', mode === 'child');
+    // Show/hide
+    document.querySelectorAll('.expert-view').forEach(el => {
+      el.style.display = mode === 'expert' ? '' : 'none';
+    });
+    document.querySelector('.tabs').style.display = mode === 'expert' ? '' : 'none';
+    const child = document.getElementById('childView');
+    child.classList.toggle('visible', mode === 'child');
+    if (mode === 'child') {
+      child.style.display = 'block';
+    } else {
+      child.style.display = 'none';
+      // Restore active tab
+      const activeTab = document.querySelector('.tab.active');
+      const tabName = activeTab ? activeTab.textContent.toLowerCase() : 'daily';
+      const target = document.getElementById(tabName);
+      if (target) target.classList.add('visible');
+    }
+  }
+
+  // Tasks
+  function toggleTask(el) {
+    el.classList.toggle('done');
+  }
+
+  // Collapse
+  function toggleCollapse(el) {
+    el.classList.toggle('open');
+  }
+
+  // Toast
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Copy Briefing
+  function copyBriefing() {
+    const text = `🚀 EliteHaldi Daily Brief — Mar 11, 2026\nHealth Index: 92% 🌱 Growth\nVPD: 0.94 kPa ✓ Optimal\nEC: 2.4 mS/cm (↑ +0.2)\npH: 6.1 ✓ Stable\n2/3 Dailies Complete\n⚠️ Zone B needs EC flush\n⏳ Pest scouting pending`;
+    navigator.clipboard.writeText(text).catch(() => {});
+    showToast('📋 Daily Brief copied! Paste into WhatsApp or Slack.');
+  }
+
+  // Voice Log
+  function voiceLog() {
+    showToast('🎙 Voice recording started... (tap mic to stop)');
+  }
+
+  // Bottom Nav
+  function bottomNav(tab, el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    if (tab === 'reports') {
+      // Switch to weekly reports tab
+      const weeklyTab = document.querySelectorAll('.tab')[1];
+      if (currentMode === 'expert') switchTab('weekly', weeklyTab);
+    }
+    showToast(`Navigating to ${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+  }
+
+  // Build mini charts
+  function buildChart(containerId, labelId, values, min, max, color) {
+    const c = document.getElementById(containerId);
+    const l = document.getElementById(labelId);
+    if (!c || !l) return;
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    values.forEach((v, i) => {
+      const pct = ((v - min) / (max - min)) * 100;
+      const wrap = document.createElement('div');
+      wrap.style.flex = '1';
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      const fill = document.createElement('div');
+      fill.className = 'bar-fill';
+      fill.style.cssText = `height:${pct}%;background:${color};`;
+      bar.appendChild(fill);
+      wrap.appendChild(bar);
+      c.appendChild(wrap);
+      const lbl = document.createElement('div');
+      lbl.className = 'bar-label';
+      lbl.textContent = days[i];
+      l.appendChild(lbl);
+      l.style.display = 'flex';
+      l.style.gap = '4px';
+    });
+  }
+
+  // Monthly biomass
+  function buildBioChart() {
+    const c = document.getElementById('bioChart');
+    const l = document.getElementById('bioLabels');
+    if (!c || !l) return;
+    const months = ['Nov','Dec','Jan','Feb','Mar','Apr'];
+    const vals = [60, 90, 130, 165, 198, null];
+    const max = 220;
+    months.forEach((m, i) => {
+      const wrap = document.createElement('div');
+      wrap.style.flex = '1';
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      if (vals[i] !== null) {
+        const fill = document.createElement('div');
+        fill.className = 'bar-fill';
+        const pct = (vals[i] / max) * 100;
+        fill.style.cssText = `height:${pct}%;background:${i === 4 ? 'var(--gold)' : 'var(--green)'};`;
+        bar.appendChild(fill);
+      }
+      wrap.appendChild(bar);
+      c.appendChild(wrap);
+      const lbl = document.createElement('div');
+      lbl.className = 'bar-label';
+      lbl.textContent = m;
+      l.appendChild(lbl);
+      l.style.display = 'flex';
+      l.style.gap = '4px';
+    });
+  }
+
+  function buildYldChart() {
+    const c = document.getElementById('yldChart');
+    const l = document.getElementById('yldLabels');
+    if (!c || !l) return;
+    const months = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+    const vals = [0,0,0,10,40,120,200,240,280,260,null,null];
+    const max = 300;
+    months.forEach((m, i) => {
+      const wrap = document.createElement('div');
+      wrap.style.flex = '1';
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      if (vals[i] !== null && vals[i] > 0) {
+        const fill = document.createElement('div');
+        fill.className = 'bar-fill';
+        const pct = (vals[i] / max) * 100;
+        fill.style.cssText = `height:${pct}%;background:var(--gold);`;
+        bar.appendChild(fill);
+      }
+      wrap.appendChild(bar);
+      c.appendChild(wrap);
+      const lbl = document.createElement('div');
+      lbl.className = 'bar-label';
+      lbl.textContent = m;
+      l.appendChild(lbl);
+      l.style.display = 'flex';
+      l.style.gap = '4px';
+    });
+  }
+
+  buildChart('ecChart', 'ecLabels', [2.0,2.1,2.3,2.2,2.4,2.5,2.4], 1.5, 3.0, 'var(--blue)');
+  buildChart('phChart', 'phLabels', [6.0,6.1,6.1,6.2,6.1,6.0,6.1], 5.5, 7.0, 'var(--green)');
+  buildBioChart();
+  buildYldChart();
+</script>
+</body>
+</html>

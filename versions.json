@@ -1,0 +1,26 @@
+{
+  "project": "EliteHaldi Command Center",
+  "stable": "v20",
+  "latest": "v20",
+  "versions": [
+    {
+      "version": "v20",
+      "file": "versions/v20.html",
+      "date": "2026-03-11",
+      "status": "stable",
+      "tag": "production",
+      "changelog": [
+        "Farm Health Index (0-100%) with traffic light system",
+        "VPD Stress Meter as first visible element",
+        "Dynamic tooltips on all KPIs",
+        "Range bars with gold needle marker + delta arrows",
+        "Time-phased tabs: Daily / Weekly / Monthly / Yearly",
+        "Child/Simplified mode with face system",
+        "Copy Daily Brief button (WhatsApp/Slack ready)",
+        "Voice log button for non-technical staff",
+        "Phenology stage tracker",
+        "Knowledge Hub + Past Seasons collapsed to sidebar"
+      ]
+    }
+  ]
+}

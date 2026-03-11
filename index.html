@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EliteHaldi — Loading...</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d0f0c; color: #e8e4d9; font-family: 'DM Mono', monospace; }
+  #splash {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 12px;
+  }
+  .logo { font-size: 48px; }
+  .name { font-size: 22px; color: #c9a227; letter-spacing: -.02em; }
+  .ver  { font-size: 11px; color: #7a7d72; letter-spacing: .1em; }
+  .bar  {
+    width: 120px; height: 3px;
+    background: #2a2f27;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #c9a227;
+    border-radius: 4px;
+    animation: load 0.8s ease forwards;
+  }
+  @keyframes load { to { width: 100%; } }
+</style>
+</head>
+<body>
+<div id="splash">
+  <div class="logo">🌿</div>
+  <div class="name">EliteHaldi</div>
+  <div class="ver" id="verLabel">Loading stable version...</div>
+  <div class="bar"><div class="bar-fill"></div></div>
+</div>
+<script>
+  // Reads versions.json, finds stable version, redirects there
+  // Supports ?v=v21 to load a specific version
+  // Supports ?panel=true to show version panel instead of redirecting
+  const params = new URLSearchParams(window.location.search);
+  const pinned = params.get('v');
+  const panel  = params.get('panel');
+
+  fetch('./versions.json')
+    .then(r => r.json())
+    .then(data => {
+      const target = pinned || data.stable;
+      const vObj = data.versions.find(v => v.version === target) || data.versions.at(-1);
+      document.getElementById('verLabel').textContent =
+        `${vObj.status === 'stable' ? '✓ Stable' : '🧪 Dev'} · ${vObj.version} · ${vObj.date}`;
+
+      if (panel) {
+        renderPanel(data);
+      } else {
+        setTimeout(() => {
+          window.location.href = vObj.file;
+        }, 900);
+      }
+    })
+    .catch(() => {
+      // fallback if no versions.json (e.g. direct file open)
+      window.location.href = 'versions/v20.html';
+    });
+
+  function renderPanel(data) {
+    document.getElementById('splash').remove();
+    document.body.style.padding = '24px 20px 40px';
+    document.body.style.maxWidth = '600px';
+    document.body.style.margin = '0 auto';
+
+    const stableObj = data.versions.find(v => v.version === data.stable);
+    const latestObj = data.versions.find(v => v.version === data.latest);
+
+    document.body.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+        <span style="font-size:28px">🌿</span>
+        <div>
+          <div style="font-size:18px;color:#c9a227;font-family:Georgia,serif;font-weight:700">EliteHaldi</div>
+          <div style="font-size:11px;color:#7a7d72;letter-spacing:.1em">VERSION MANAGER</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+        <a href="${stableObj.file}" style="flex:1;text-align:center;padding:12px;background:#1a1e18;border:2px solid #4caf6e;border-radius:12px;text-decoration:none;color:#4caf6e;font-size:12px;letter-spacing:.06em">
+          ✓ OPEN STABLE<br><span style="font-size:18px;color:#e8e4d9;font-family:Georgia,serif;font-weight:700">${data.stable}</span>
+        </a>
+        ${data.latest !== data.stable ? `
+        <a href="${latestObj.file}" style="flex:1;text-align:center;padding:12px;background:#1a1e18;border:2px solid #e09a38;border-radius:12px;text-decoration:none;color:#e09a38;font-size:12px;letter-spacing:.06em">
+          🧪 OPEN LATEST<br><span style="font-size:18px;color:#e8e4d9;font-family:Georgia,serif;font-weight:700">${data.latest}</span>
+        </a>` : ''}
+      </div>
+
+      <div style="font-size:10px;color:#7a7d72;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">All Versions</div>
+      ${data.versions.slice().reverse().map(v => `
+        <div style="background:#141712;border:1px solid #2a2f27;border-radius:12px;padding:14px 16px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <a href="${v.file}" style="font-family:Georgia,serif;font-size:20px;font-weight:700;color:${v.status==='stable'?'#4caf6e':'#e09a38'};text-decoration:none;">${v.version}</a>
+            <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${v.status==='stable'?'rgba(76,175,110,.15)':'rgba(224,154,56,.15)'};color:${v.status==='stable'?'#4caf6e':'#e09a38'};letter-spacing:.06em;text-transform:uppercase;">${v.tag || v.status}</span>
+            <span style="font-size:10px;color:#7a7d72;margin-left:auto;">${v.date}</span>
+          </div>
+          <ul style="list-style:none;padding:0;">
+            ${v.changelog.slice(0,4).map(c => `<li style="font-size:11px;color:#7a7d72;padding:2px 0;">· ${c}</li>`).join('')}
+            ${v.changelog.length > 4 ? `<li style="font-size:11px;color:#c9a227;">+ ${v.changelog.length-4} more changes</li>` : ''}
+          </ul>
+        </div>
+      `).join('')}
+
+      <div style="margin-top:20px;padding:14px;background:#141712;border:1px solid #2a2f27;border-radius:12px;font-size:11px;color:#7a7d72;line-height:1.8;">
+        <div style="color:#e8e4d9;margin-bottom:6px;font-size:12px;">Quick Links</div>
+        <div>Stable: <a href="./?v=${data.stable}" style="color:#c9a227">/?v=${data.stable}</a></div>
+        <div>Latest: <a href="./?v=${data.latest}" style="color:#c9a227">/?v=${data.latest}</a></div>
+        <div>This panel: <a href="./?panel=true" style="color:#c9a227">/?panel=true</a></div>
+      </div>
+    `;
+  }
+</script>
+</body>
+</html>

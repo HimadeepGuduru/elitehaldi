@@ -1,0 +1,64 @@
+name: Deploy EliteHaldi
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # allows manual trigger from GitHub UI
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version info
+        run: |
+          STABLE=$(python3 -c "import json; d=json.load(open('versions.json')); print(d['stable'])")
+          LATEST=$(python3 -c "import json; d=json.load(open('versions.json')); print(d['latest'])")
+          echo "STABLE=$STABLE" >> $GITHUB_ENV
+          echo "LATEST=$LATEST" >> $GITHUB_ENV
+          echo "🌿 Deploying stable=$STABLE latest=$LATEST"
+
+      - name: Validate stable file exists
+        run: |
+          if [ ! -f "versions/${{ env.STABLE }}.html" ]; then
+            echo "❌ Stable file missing: versions/${{ env.STABLE }}.html"
+            exit 1
+          fi
+          echo "✅ Stable file found"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'   # uploads the whole folder (index.html + versions/ + versions.json)
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Print URLs
+        run: |
+          URL="${{ steps.deployment.outputs.page_url }}"
+          echo ""
+          echo "✅ Deployed!"
+          echo "   Entry point : $URL"
+          echo "   Stable      : ${URL}versions/${{ env.STABLE }}.html"
+          echo "   Latest      : ${URL}versions/${{ env.LATEST }}.html"
+          echo "   Version panel: ${URL}?panel=true"
